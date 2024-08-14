@@ -169,9 +169,9 @@ def get_image_tensor(image_path, sidelength):
 class ImageFitting(Dataset):
     def __init__(self, sidelength):
         super().__init__()
-        #img = get_cameraman_tensor(sidelength)
-        img = get_image_tensor('data/red_car.png', sidelength)
-        self.pixels = img.view(3, 128*128).permute(1, 0)
+        img = get_cameraman_tensor(sidelength)
+        #img = get_image_tensor('data/red_car.png', sidelength)
+        self.pixels = img.permute(1, 2, 0).view(-1, 1)
         self.coords = get_mgrid(sidelength, 2)
 
     def __len__(self):
