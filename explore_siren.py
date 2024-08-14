@@ -169,13 +169,9 @@ def get_image_tensor(image_path, sidelength):
 class ImageFitting(Dataset):
     def __init__(self, sidelength):
         super().__init__()
-        img = get_cameraman_tensor(sidelength)
-        print('!!!')
-        print(img.shape)
-        #img = get_image_tensor('data/red_car.png', sidelength)
-        self.pixels = img.permute(1, 2, 0).view(-1, 1)
-        print('!!!!')
-        print(self.pixels.shape)
+        #img = get_cameraman_tensor(sidelength)
+        img = get_image_tensor('data/red_car.png', sidelength)
+        self.pixels = img.view(128*128, 3)
         self.coords = get_mgrid(sidelength, 2)
 
     def __len__(self):
@@ -191,7 +187,7 @@ class ImageFitting(Dataset):
 cameraman = ImageFitting(128)
 dataloader = DataLoader(cameraman, batch_size=1, pin_memory=True, num_workers=0)
 
-img_siren = Siren(in_features=4, out_features=3, hidden_features=128,
+img_siren = Siren(in_features=2, out_features=3, hidden_features=128,
                   hidden_layers=3, outermost_linear=True)
 img_siren.cuda()
 
@@ -204,8 +200,6 @@ model_input, ground_truth = next(iter(dataloader))
 model_input, ground_truth = model_input.cuda(), ground_truth.cuda()
 
 for step in range(total_steps):
-    print('!!!')
-    print(model_input.shape)
     model_output, coords = img_siren(model_input)
     loss = ((model_output - ground_truth) ** 2).mean()
 
