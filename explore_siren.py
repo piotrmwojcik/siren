@@ -210,9 +210,9 @@ for step in range(total_steps):
         img_laplacian = laplace(model_output, coords)
 
         fig, axes = plt.subplots(1, 3, figsize=(18, 6))
-        axes[0].imshow(model_output.cpu().view(256, 256).detach().numpy())
-        axes[1].imshow(img_grad.norm(dim=-1).cpu().view(256, 256).detach().numpy())
-        axes[2].imshow(img_laplacian.cpu().view(256, 256).detach().numpy())
+        axes[0].imshow(model_output.cpu().view(128, 128).detach().numpy())
+        axes[1].imshow(img_grad.norm(dim=-1).cpu().view(128, 128).detach().numpy())
+        axes[2].imshow(img_laplacian.cpu().view(128, 128).detach().numpy())
 
         # Save the figure to a file with step number in the filename
         output_dir = 'test_output'
