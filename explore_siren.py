@@ -170,9 +170,8 @@ def get_image_tensor(image_path, sidelength):
 class ImageFitting(Dataset):
     def __init__(self, sidelength):
         super().__init__()
-        img = get_image_tensor('data/red_car.png', sidelength)
-        #img = get_cameraman_tensor(sidelength)
-        self.pixels = img.view(128*128, 3).permute(1, 0)
+        img = get_cameraman_tensor(sidelength)
+        self.pixels = img.permute(1, 2, 0).view(-1, 1)
         self.coords = get_mgrid(sidelength, 2)
 
     def __len__(self):
@@ -180,8 +179,6 @@ class ImageFitting(Dataset):
 
     def __getitem__(self, idx):
         if idx > 0: raise IndexError
-
-        return self.coords, self.pixels
 
 
 cameraman = ImageFitting(128)
@@ -200,6 +197,7 @@ model_input, ground_truth = next(iter(dataloader))
 model_input, ground_truth = model_input.cuda(), ground_truth.cuda()
 
 for step in range(total_steps):
+    print('!!!!!!! ', model_input.shape)
     model_output, coords = img_siren(model_input)
     print(model_output.shape)
     loss = ((model_output - ground_truth) ** 2).mean()
