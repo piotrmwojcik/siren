@@ -186,7 +186,7 @@ class ImageFitting(Dataset):
 cameraman = ImageFitting(128)
 dataloader = DataLoader(cameraman, batch_size=1, pin_memory=True, num_workers=0)
 
-img_siren = Siren(in_features=2, out_features=3, hidden_features=128,
+img_siren = Siren(in_features=2, out_features=1, hidden_features=128,
                   hidden_layers=3, outermost_linear=True)
 img_siren.cuda()
 
