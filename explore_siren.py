@@ -151,22 +151,6 @@ def get_cameraman_tensor(sidelength):
     return img
 
 
-def get_image_tensor(image_path, sidelength):
-    # Load the image from the specified file path (keep it in RGB)
-    img = Image.open(image_path).convert('RGB')  # Ensure image is in RGB mode
-
-    # Define the transformation pipeline
-    transform = Compose([
-        Resize((sidelength, sidelength)),  # Resize to the specified side length
-        ToTensor(),                        # Convert the image to a tensor
-        Normalize(mean=torch.Tensor([0.5, 0.5, 0.5]), std=torch.Tensor([0.5, 0.5, 0.5]))  # Normalize the tensor
-    ])
-
-    # Apply the transformations
-    img = transform(img)
-    return img
-
-
 class ImageFitting(Dataset):
     def __init__(self, sidelength):
         super().__init__()
@@ -183,10 +167,10 @@ class ImageFitting(Dataset):
         return self.coords, self.pixels
 
 
-cameraman = ImageFitting(128)
+cameraman = ImageFitting(256)
 dataloader = DataLoader(cameraman, batch_size=1, pin_memory=True, num_workers=0)
 
-img_siren = Siren(in_features=2, out_features=1, hidden_features=128,
+img_siren = Siren(in_features=2, out_features=1, hidden_features=256,
                   hidden_layers=3, outermost_linear=True)
 img_siren.cuda()
 
@@ -199,8 +183,8 @@ model_input, ground_truth = next(iter(dataloader))
 model_input, ground_truth = model_input.cuda(), ground_truth.cuda()
 
 for step in range(total_steps):
-    print('!!!!!!! ', model_input.shape)
     model_output, coords = img_siren(model_input)
+    print('!!!')
     print(model_output.shape)
     loss = ((model_output - ground_truth) ** 2).mean()
 
@@ -210,15 +194,10 @@ for step in range(total_steps):
         img_laplacian = laplace(model_output, coords)
 
         fig, axes = plt.subplots(1, 3, figsize=(18, 6))
-        axes[0].imshow(model_output.cpu().view(128, 128).detach().numpy())
-        axes[1].imshow(img_grad.norm(dim=-1).cpu().view(128, 128).detach().numpy())
-        axes[2].imshow(img_laplacian.cpu().view(128, 128).detach().numpy())
-
-        # Save the figure to a file with step number in the filename
-        output_dir = 'test_output'
-        file_path = os.path.join(output_dir, f'step_{step}.png')
-        plt.savefig(file_path)
-        plt.close(fig)  # Close the figure to free up memory
+        axes[0].imshow(model_output.cpu().view(256, 256).detach().numpy())
+        axes[1].imshow(img_grad.norm(dim=-1).cpu().view(256, 256).detach().numpy())
+        axes[2].imshow(img_laplacian.cpu().view(256, 256).detach().numpy())
+        plt.show()
 
     optim.zero_grad()
     loss.backward()
