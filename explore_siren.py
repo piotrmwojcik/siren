@@ -180,6 +180,7 @@ class ImageFitting(Dataset):
     def __getitem__(self, idx):
         if idx > 0: raise IndexError
 
+        print(self.coords.shape, self.pixels.shape)
         return self.coords, self.pixels
 
 
