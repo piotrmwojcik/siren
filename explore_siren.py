@@ -174,6 +174,7 @@ class ImageFitting(Dataset):
         #img = get_cameraman_tensor(sidelength)
         print('!!!')
         print(img.shape)
+        print(img.permute(1, 2, 0).shape)
         self.pixels = img.permute(1, 2, 0).view(-1, 1)
         print('!!')
         print(self.pixels.shape)
