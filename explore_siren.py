@@ -201,6 +201,8 @@ model_input, ground_truth = model_input.cuda(), ground_truth.cuda()
 
 for step in range(total_steps):
     model_output, coords = img_siren(model_input)
+    print('!!!!')
+    print(model_output.shape)
     loss = ((model_output - ground_truth) ** 2).mean()
 
     if not step % steps_til_summary:
