@@ -180,6 +180,8 @@ class ImageFitting(Dataset):
     def __getitem__(self, idx):
         if idx > 0: raise IndexError
 
+        return self.coords, self.pixels
+
 
 cameraman = ImageFitting(128)
 dataloader = DataLoader(cameraman, batch_size=1, pin_memory=True, num_workers=0)
