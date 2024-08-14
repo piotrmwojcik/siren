@@ -195,7 +195,11 @@ for step in range(total_steps):
         axes[0].imshow(model_output.cpu().view(256, 256).detach().numpy())
         axes[1].imshow(img_grad.norm(dim=-1).cpu().view(256, 256).detach().numpy())
         axes[2].imshow(img_laplacian.cpu().view(256, 256).detach().numpy())
-        plt.show()
+
+        # Save the figure to a file with step number in the filename
+        file_path = os.path.join(output_dir, f'test_output/step_{step}.png')
+        plt.savefig(file_path)
+        plt.close(fig)  # Close the figure to free up memory
 
     optim.zero_grad()
     loss.backward()
