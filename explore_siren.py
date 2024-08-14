@@ -172,6 +172,8 @@ class ImageFitting(Dataset):
         super().__init__()
         img = get_image_tensor('data/red_car.png', sidelength)
         #img = get_cameraman_tensor(sidelength)
+        print('!!!')
+        print(img.shape)
         self.pixels = img.permute(1, 2, 0).view(-1, 1)
         print('!!')
         print(self.pixels.shape)
