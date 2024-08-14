@@ -201,8 +201,6 @@ model_input, ground_truth = model_input.cuda(), ground_truth.cuda()
 
 for step in range(total_steps):
     model_output, coords = img_siren(model_input)
-    print('!!!!')
-    print(model_output.shape)
     loss = ((model_output - ground_truth) ** 2).mean()
 
     if not step % steps_til_summary:
@@ -214,7 +212,8 @@ for step in range(total_steps):
         axes[0].imshow(model_output.cpu().view(128, 128, 3).detach().numpy())
         axes[1].imshow(img_grad.norm(dim=-1).cpu().view(128, 128).detach().numpy())
         axes[2].imshow(img_laplacian.cpu().view(128, 128).detach().numpy())
-        plt.show()
+        save_path = os.path.join('test_output', f"step_{step}.png")
+        plt.savefig(save_path)
 
     optim.zero_grad()
     loss.backward()
