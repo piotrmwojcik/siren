@@ -197,7 +197,8 @@ for step in range(total_steps):
         axes[2].imshow(img_laplacian.cpu().view(256, 256).detach().numpy())
 
         # Save the figure to a file with step number in the filename
-        file_path = os.path.join(output_dir, f'test_output/step_{step}.png')
+        output_dir = 'test_output'
+        file_path = os.path.join(output_dir, f'step_{step}.png')
         plt.savefig(file_path)
         plt.close(fig)  # Close the figure to free up memory
 
