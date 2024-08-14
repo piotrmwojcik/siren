@@ -153,7 +153,7 @@ def get_cameraman_tensor(sidelength):
 
 def get_image_tensor(image_path, sidelength):
     # Load the image from the specified file path
-    img = Image.open(image_path).convert('L')  # Convert to grayscale ('L')
+    img = Image.open(image_path)#.convert('L')  # Convert to grayscale ('L')
 
     # Define the transformation pipeline
     transform = Compose([
