@@ -212,8 +212,8 @@ for step in range(total_steps):
 
         fig, axes = plt.subplots(1, 3, figsize=(18, 6))
         axes[0].imshow(model_output.cpu().view(128, 128, 3).detach().numpy())
-        axes[1].imshow(img_grad.norm(dim=-1).cpu().view(128, 128, 3).detach().numpy())
-        axes[2].imshow(img_laplacian.cpu().view(128, 128, 3).detach().numpy())
+        axes[1].imshow(img_grad.norm(dim=-1).cpu().view(128, 128).detach().numpy())
+        axes[2].imshow(img_laplacian.cpu().view(128, 128).detach().numpy())
         plt.show()
 
     optim.zero_grad()
