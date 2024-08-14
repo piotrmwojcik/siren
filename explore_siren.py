@@ -170,8 +170,8 @@ def get_image_tensor(image_path, sidelength):
 class ImageFitting(Dataset):
     def __init__(self, sidelength):
         super().__init__()
-        #img = get_image_tensor('data/red_car.png', sidelength)
-        img = get_cameraman_tensor(sidelength)
+        img = get_image_tensor('data/red_car.png', sidelength)
+        #img = get_cameraman_tensor(sidelength)
         self.pixels = img.permute(1, 2, 0).view(-1, 1)
         print('!!')
         print(self.pixels.shape)
