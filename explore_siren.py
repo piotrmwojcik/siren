@@ -152,14 +152,14 @@ def get_cameraman_tensor(sidelength):
 
 
 def get_image_tensor(image_path, sidelength):
-    # Load the image from the specified file path
-    img = Image.open(image_path)#.convert('L')  # Convert to grayscale ('L')
+    # Load the image from the specified file path (keep it in RGB)
+    img = Image.open(image_path).convert('RGB')  # Ensure image is in RGB mode
 
     # Define the transformation pipeline
     transform = Compose([
         Resize((sidelength, sidelength)),  # Resize to the specified side length
         ToTensor(),                        # Convert the image to a tensor
-        Normalize(torch.Tensor([0.5]), torch.Tensor([0.5]))  # Normalize the tensor
+        Normalize(mean=torch.Tensor([0.5, 0.5, 0.5]), std=torch.Tensor([0.5, 0.5, 0.5]))  # Normalize the tensor
     ])
 
     # Apply the transformations
@@ -171,6 +171,8 @@ class ImageFitting(Dataset):
     def __init__(self, sidelength):
         super().__init__()
         img = get_image_tensor('data/red_car.png', sidelength)
+        print('!!!!')
+        print(img.shape)
         self.pixels = img.permute(1, 2, 0).view(-1, 1)
         self.coords = get_mgrid(sidelength, 2)
 
