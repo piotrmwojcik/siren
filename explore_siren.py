@@ -172,12 +172,7 @@ class ImageFitting(Dataset):
         super().__init__()
         img = get_image_tensor('data/red_car.png', sidelength)
         #img = get_cameraman_tensor(sidelength)
-        print('!!!')
-        print(img.shape)
-        print(img.permute(1, 2, 0).shape)
-        self.pixels = img.permute(1, 2, 0).view(-1, 1)
-        print('!!')
-        print(self.pixels.shape)
+        self.pixels = img.view(128*128, 3).permute(1, 0)
         self.coords = get_mgrid(sidelength, 2)
 
     def __len__(self):
