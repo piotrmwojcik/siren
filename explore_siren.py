@@ -151,6 +151,22 @@ def get_cameraman_tensor(sidelength):
     return img
 
 
+def get_image_tensor(image_path, sidelength):
+    # Load the image from the specified file path
+    img = Image.open(image_path).convert('L')  # Convert to grayscale ('L')
+
+    # Define the transformation pipeline
+    transform = Compose([
+        Resize((sidelength, sidelength)),  # Resize to the specified side length
+        ToTensor(),                        # Convert the image to a tensor
+        Normalize(torch.Tensor([0.5]), torch.Tensor([0.5]))  # Normalize the tensor
+    ])
+
+    # Apply the transformations
+    img = transform(img)
+    return img
+
+
 class ImageFitting(Dataset):
     def __init__(self, sidelength):
         super().__init__()
@@ -167,10 +183,10 @@ class ImageFitting(Dataset):
         return self.coords, self.pixels
 
 
-cameraman = ImageFitting(256)
+cameraman = ImageFitting(128)
 dataloader = DataLoader(cameraman, batch_size=1, pin_memory=True, num_workers=0)
 
-img_siren = Siren(in_features=2, out_features=1, hidden_features=256,
+img_siren = Siren(in_features=2, out_features=1, hidden_features=128,
                   hidden_layers=3, outermost_linear=True)
 img_siren.cuda()
 
@@ -184,6 +200,8 @@ model_input, ground_truth = model_input.cuda(), ground_truth.cuda()
 
 for step in range(total_steps):
     model_output, coords = img_siren(model_input)
+    print('!!!')
+    print(model_output.shape)
     loss = ((model_output - ground_truth) ** 2).mean()
 
     if not step % steps_til_summary:
