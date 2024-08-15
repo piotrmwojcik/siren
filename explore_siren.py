@@ -196,6 +196,8 @@ steps_til_summary = 10
 
 optim = torch.optim.Adam(lr=1e-4, params=img_siren.parameters())
 
+
+
 model_input, ground_truth = next(iter(dataloader))
 model_input, ground_truth = model_input.cuda(), ground_truth.cuda()
 
@@ -208,10 +210,11 @@ for step in range(total_steps):
         img_grad = gradient(model_output, coords)
         img_laplacian = laplace(model_output, coords)
 
-        fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+        fig, axes = plt.subplots(1, 4, figsize=(18, 6))
         axes[0].imshow(model_output.cpu().view(128, 128, 3).detach().numpy())
-        axes[1].imshow(img_grad.norm(dim=-1).cpu().view(128, 128).detach().numpy())
-        axes[2].imshow(img_laplacian.cpu().view(128, 128).detach().numpy())
+        axes[1].imshow(ground_truth.cpu().view(128, 128, 3).detach().numpy())
+        axes[2].imshow(img_grad.norm(dim=-1).cpu().view(128, 128).detach().numpy())
+        axes[3].imshow(img_laplacian.cpu().view(128, 128).detach().numpy())
         save_path = os.path.join('test_output', f"step_{step}.png")
         plt.savefig(save_path)
 
