@@ -186,8 +186,6 @@ class ImageFitting(Dataset):
         super().__init__()
         #img = get_cameraman_tensor(sidelength)
         img = get_image_tensor('data/red_car.png', sidelength)
-        print('!!!')
-        print(img.shape)
         self.pixels = img.permute(1, 2, 0).view(128*128, 3)
         self.coords = get_mgrid(sidelength, 2)
 
@@ -206,13 +204,14 @@ dataloader = DataLoader(cameraman, batch_size=1, pin_memory=True, num_workers=0)
 
 img_siren = Siren(in_features=2, out_features=3, hidden_features=256,
                   hidden_layers=3, outermost_linear=True)
+img_siren.print_layer_weights()
+
 img_siren.cuda()
 
 total_steps = 500  # Since the whole image is our dataset, this just means 500 gradient descent steps.
 steps_til_summary = 10
 
 optim = torch.optim.Adam(lr=1e-4, params=img_siren.parameters())
-
 
 
 model_input, ground_truth = next(iter(dataloader))
