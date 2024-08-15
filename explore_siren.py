@@ -88,6 +88,21 @@ class Siren(nn.Module):
 
         self.net = nn.Sequential(*self.net)
 
+    def print_layer_weights(self):
+        for idx, layer in enumerate(self.net):
+            if isinstance(layer, nn.Linear):  # Check if the layer is Linear
+                print(f"Layer {idx} weights:")
+                print(layer.weight.data.shape)
+                if layer.bias is not None:
+                    print(f"Layer {idx} bias:")
+                    print(layer.bias.data.shape)
+            elif hasattr(layer, 'weight'):  # For custom layers like SineLayer
+                print(f"Layer {idx} weights:")
+                print(layer.weight.data.shape)
+                if hasattr(layer, 'bias') and layer.bias is not None:
+                    print(f"Layer {idx} bias:")
+                    print(layer.bias.data.shape)
+
     def forward(self, coords):
         coords = coords.clone().detach().requires_grad_(True)  # allows to take derivative w.r.t. input
         output = self.net(coords)
