@@ -96,12 +96,12 @@ class Siren(nn.Module):
                 if layer.bias is not None:
                     print(f"Layer {idx} bias:")
                     print(layer.bias.data.shape)
-            elif hasattr(layer, 'weight'):  # For custom layers like SineLayer
+            elif hasattr(layer.linear, 'weight'):  # For custom layers like SineLayer
                 print(f"Layer {idx} weights:")
-                print(layer.weight.data.shape)
-                if hasattr(layer, 'bias') and layer.bias is not None:
+                print(layer.linear.weight.data.shape)
+                if hasattr(layer.linear, 'bias') and layer.linear.bias is not None:
                     print(f"Layer {idx} bias:")
-                    print(layer.bias.data.shape)
+                    print(layer.linear.bias.data.shape)
 
     def forward(self, coords):
         coords = coords.clone().detach().requires_grad_(True)  # allows to take derivative w.r.t. input
