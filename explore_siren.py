@@ -159,7 +159,7 @@ def get_image_tensor(image_path, sidelength):
     transform = Compose([
         Resize((sidelength, sidelength)),  # Resize to the specified side length
         ToTensor(),                        # Convert the image to a tensor
-        Normalize(mean=torch.Tensor([0.5, 0.5, 0.5]), std=torch.Tensor([0.5, 0.5, 0.5]))  # Normalize the tensor
+        #Normalize(mean=torch.Tensor([0.5, 0.5, 0.5]), std=torch.Tensor([0.5, 0.5, 0.5]))  # Normalize the tensor
     ])
 
     # Apply the transformations
