@@ -202,7 +202,9 @@ class ImageFitting(Dataset):
 cameraman = ImageFitting(128)
 dataloader = DataLoader(cameraman, batch_size=1, pin_memory=True, num_workers=0)
 
-img_siren = Siren(in_features=2, out_features=3, hidden_features=256,
+img_siren1 = Siren(in_features=2, out_features=3, hidden_features=256,
+                  hidden_layers=3, outermost_linear=True)
+img_siren2 = Siren(in_features=2, out_features=3, hidden_features=256,
                   hidden_layers=3, outermost_linear=True)
 img_siren.print_layer_weights()
 
@@ -211,15 +213,17 @@ img_siren.cuda()
 total_steps = 500  # Since the whole image is our dataset, this just means 500 gradient descent steps.
 steps_til_summary = 10
 
-optim = torch.optim.Adam(lr=1e-4, params=img_siren.parameters())
+optim = torch.optim.Adam(lr=1e-4, params=(img_siren1.parameters() + img_siren2.parameters()))
 
 
 model_input, ground_truth = next(iter(dataloader))
 model_input, ground_truth = model_input.cuda(), ground_truth.cuda()
 
 for step in range(total_steps):
-    model_output, coords = img_siren(model_input)
-    loss = ((model_output - ground_truth) ** 2).mean()
+    model_output1, coords1 = img_siren(model_input)
+    model_output2, coords2 = img_siren(model_input)
+    model_output = torch.cat([model_output1, model_output2], dim=0)
+    loss = ((model_output - ground_truth.repeat(2, 1, 1)) ** 2).mean()
 
     if not step % steps_til_summary:
         print("Step %d, Total loss %0.6f" % (step, loss))
