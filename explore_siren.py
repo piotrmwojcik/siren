@@ -226,7 +226,6 @@ for step in range(total_steps):
     model_output = torch.cat([model_output1, model_output2], dim=0)
     loss = ((model_output - ground_truth.repeat(2, 1, 1)) ** 2).mean()
 
-
     if not step % steps_til_summary:
         print("Step %d, Total loss %0.6f" % (step, loss))
         img_grad = gradient(model_output1, coords1)
@@ -243,3 +242,22 @@ for step in range(total_steps):
     optim.zero_grad()
     loss.backward()
     optim.step()
+
+z = []
+for idx, mlp in enumerate(_mlp_list):
+    state_dict = mlp.state_dict()
+    layers = []
+    layer_names = []
+    input = []
+    for l in state_dict:
+        st_shape = state_dict[l].shape
+        layers.append(np.prod(st_shape))
+        layer_names.append(l)
+        input.append(state_dict[l].flatten())
+    input = torch.hstack(input).cuda()
+    cache.update({fn[idx]: input})
+    z.append(input.unsqueeze(0))
+
+z = torch.cat(z, dim=0)
+print('!!!')
+print(z.shape)
