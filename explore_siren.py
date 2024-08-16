@@ -206,9 +206,10 @@ img_siren1 = Siren(in_features=2, out_features=3, hidden_features=256,
                   hidden_layers=3, outermost_linear=True)
 img_siren2 = Siren(in_features=2, out_features=3, hidden_features=256,
                   hidden_layers=3, outermost_linear=True)
-img_siren.print_layer_weights()
+#img_siren.print_layer_weights()
 
-img_siren.cuda()
+img_siren1.cuda()
+img_siren2.cuda()
 
 total_steps = 500  # Since the whole image is our dataset, this just means 500 gradient descent steps.
 steps_til_summary = 10
@@ -220,8 +221,8 @@ model_input, ground_truth = next(iter(dataloader))
 model_input, ground_truth = model_input.cuda(), ground_truth.cuda()
 
 for step in range(total_steps):
-    model_output1, coords1 = img_siren(model_input)
-    model_output2, coords2 = img_siren(model_input)
+    model_output1, coords1 = img_siren1(model_input)
+    model_output2, coords2 = img_siren2(model_input)
     model_output = torch.cat([model_output1, model_output2], dim=0)
     loss = ((model_output - ground_truth.repeat(2, 1, 1)) ** 2).mean()
 
