@@ -218,7 +218,7 @@ optim = torch.optim.Adam(lr=1e-4, params=(list(img_siren1.parameters()) + list(i
 
 
 def generate_mlp_from_weights(weights):
-    mlp = Siren(in_features=2, out_features=3, hidden_features=128,
+    mlp = Siren(in_features=2, out_features=3, hidden_features=256,
                 hidden_layers=3, outermost_linear=True)
     state_dict = mlp.state_dict()
     weight_names = list(state_dict.keys())
