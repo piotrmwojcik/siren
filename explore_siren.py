@@ -217,8 +217,28 @@ steps_til_summary = 10
 optim = torch.optim.Adam(lr=1e-4, params=(list(img_siren1.parameters()) + list(img_siren2.parameters())))
 
 
+def generate_mlp_from_weights(weights):
+    mlp = Siren(in_features=2, out_features=3, hidden_features=128,
+                hidden_layers=3, outermost_linear=True)
+    state_dict = mlp.state_dict()
+    weight_names = list(state_dict.keys())
+    for layer in weight_names:
+        val = state_dict[layer]
+        num_params = np.product(list(val.shape))
+        w = weights[:num_params]
+        w = w.view(*val.shape)
+        state_dict[layer] = w
+        weights = weights[num_params:]
+    assert len(weights) == 0, f"len(weights) = {len(weights)}"
+    mlp.load_state_dict(state_dict)
+    return mlp
+
+
+
 model_input, ground_truth = next(iter(dataloader))
 model_input, ground_truth = model_input.cuda(), ground_truth.cuda()
+
+
 
 for step in range(total_steps):
     model_output1, coords1 = img_siren1(model_input)
