@@ -256,4 +256,4 @@ for l in state_dict:
 input = torch.hstack(input).cuda()
 
 print('!!!')
-print(input)
+print(input.shape)
