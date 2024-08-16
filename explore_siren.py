@@ -226,14 +226,15 @@ for step in range(total_steps):
     model_output = torch.cat([model_output1, model_output2], dim=0)
     loss = ((model_output - ground_truth.repeat(2, 1, 1)) ** 2).mean()
 
+
     if not step % steps_til_summary:
         print("Step %d, Total loss %0.6f" % (step, loss))
-        img_grad = gradient(model_output, coords)
-        img_laplacian = laplace(model_output, coords)
+        img_grad = gradient(model_output1, coords1)
+        img_laplacian = laplace(model_output, coords1)
 
         fig, axes = plt.subplots(1, 4, figsize=(18, 6))
-        axes[0].imshow(model_output.cpu().view(128, 128, 3).detach().numpy())
-        axes[1].imshow(ground_truth.cpu().view(128, 128, 3).detach().numpy())
+        axes[0].imshow(model_output1.cpu().view(128, 128, 3).detach().numpy())
+        axes[1].imshow(ground_truth[0].cpu().view(128, 128, 3).detach().numpy())
         axes[2].imshow(img_grad.norm(dim=-1).cpu().view(128, 128).detach().numpy())
         axes[3].imshow(img_laplacian.cpu().view(128, 128).detach().numpy())
         save_path = os.path.join('test_output', f"step_{step}.png")
