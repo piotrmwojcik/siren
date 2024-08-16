@@ -214,7 +214,7 @@ img_siren2.cuda()
 total_steps = 500  # Since the whole image is our dataset, this just means 500 gradient descent steps.
 steps_til_summary = 10
 
-optim = torch.optim.Adam(lr=1e-4, params=(img_siren1.parameters() + img_siren2.parameters()))
+optim = torch.optim.Adam(lr=1e-4, params=(list(img_siren1.parameters()) + list(img_siren2.parameters())))
 
 
 model_input, ground_truth = next(iter(dataloader))
