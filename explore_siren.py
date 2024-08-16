@@ -254,6 +254,12 @@ for l in state_dict:
     layer_names.append(l)
     input.append(state_dict[l].flatten())
 input = torch.hstack(input).cuda()
-
+siren_example = generate_mlp_from_weights(input).cuda()
+model_input = get_mgrid(128, 2).cuda().unsqueeze(0)
 print('!!!')
 print(input.shape)
+img = siren_example(model_input)
+fig, axes = plt.subplots(1, 1, figsize=(18, 6))
+axes[0].imshow(img.cpu().view(128, 128, 3).detach().numpy())
+save_path = os.path.join('test_output', f"final.png")
+plt.savefig(save_path)
