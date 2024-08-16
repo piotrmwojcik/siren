@@ -244,20 +244,16 @@ for step in range(total_steps):
     optim.step()
 
 z = []
-for idx, mlp in enumerate(_mlp_list):
-    state_dict = mlp.state_dict()
-    layers = []
-    layer_names = []
-    input = []
-    for l in state_dict:
-        st_shape = state_dict[l].shape
-        layers.append(np.prod(st_shape))
-        layer_names.append(l)
-        input.append(state_dict[l].flatten())
-    input = torch.hstack(input).cuda()
-    cache.update({fn[idx]: input})
-    z.append(input.unsqueeze(0))
+state_dict = img_siren1.state_dict()
+layers = []
+layer_names = []
+input = []
+for l in state_dict:
+    st_shape = state_dict[l].shape
+    layers.append(np.prod(st_shape))
+    layer_names.append(l)
+    input.append(state_dict[l].flatten())
+input = torch.hstack(input).cuda()
 
-z = torch.cat(z, dim=0)
 print('!!!')
-print(z.shape)
+print(input)
