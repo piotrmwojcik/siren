@@ -486,6 +486,8 @@ class ImageFile(Dataset):
         super().__init__()
         self.img = Image.open(filename)
         self.img_channels = len(self.img.mode)
+        print('!!!')
+        print(self.img_channels.shape)
 
     def __len__(self):
         return 1
