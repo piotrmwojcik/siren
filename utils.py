@@ -5,7 +5,7 @@ import dataio
 import os
 import diff_operators
 from torchvision.utils import make_grid, save_image
-import skimage.measure
+import skimage.measure as measure
 import cv2
 import meta_modules
 import scipy.io.wavfile as wavfile
@@ -583,8 +583,8 @@ def write_psnr(pred_img, gt_img, writer, iter, prefix):
 
         trgt = (trgt / 2.) + 0.5
 
-        ssim = skimage.measure.compare_ssim(p, trgt, multichannel=True, data_range=1)
-        psnr = skimage.measure.compare_psnr(p, trgt, data_range=1)
+        ssim = measure.compare_ssim(p, trgt, multichannel=True, data_range=1)
+        psnr = measure.compare_psnr(p, trgt, data_range=1)
 
         psnrs.append(psnr)
         ssims.append(ssim)
