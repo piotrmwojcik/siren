@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 import configargparse
 from functools import partial
 
-p = configargparse.Arg  umentParser()
+p = configargparse.ArgumentParser()
 p.add('-c', '--config_filepath', required=False, is_config_file=True, help='Path to config file.')
 
 p.add_argument('--logging_root', type=str, default='./logs', help='root for logging')
