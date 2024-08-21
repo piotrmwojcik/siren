@@ -484,10 +484,8 @@ class Camera(Dataset):
 class ImageFile(Dataset):
     def __init__(self, filename):
         super().__init__()
-        self.img = Image.open(filename)
+        self.img = Image.open(filename).convert('RGB')
         self.img_channels = len(self.img.mode)
-        print('!!!')
-        print(self.img_channels)
 
     def __len__(self):
         return 1
