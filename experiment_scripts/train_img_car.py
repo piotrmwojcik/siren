@@ -35,29 +35,38 @@ p.add_argument('--model_type', type=str, default='sine',
 p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained model.')
 opt = p.parse_args()
 
-img_dataset = dataio.ImageFile('./data/red_car.png')
-coord_dataset = dataio.Implicit2DWrapper(img_dataset, sidelength=128, compute_diff='none')
-image_resolution = (128, 128)
+png_files = glob.glob(os.path.join('/data/pwojcik/sh_raw_test/cars', "*.png"))
 
-dataloader = DataLoader(coord_dataset, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)
+# Iterate over the list of .png files and print full paths
+for png_file in png_files:
+    full_path = os.path.abspath(png_file)
+    file_name = os.path.basename(png_file)
+    print(f"Processing file: {full_path}")
+    # Here you can add code to process each png_file
 
-# Define the model.
-if opt.model_type == 'sine' or opt.model_type == 'relu' or opt.model_type == 'tanh' or opt.model_type == 'selu' or opt.model_type == 'elu'\
-        or opt.model_type == 'softplus':
-    model = modules.SingleBVPNet(type=opt.model_type, mode='mlp', out_features=3,
-                                 hidden_features=128, sidelength=image_resolution)
-elif opt.model_type == 'rbf' or opt.model_type == 'nerf':
-    model = modules.SingleBVPNet(type='relu', mode=opt.model_type, sidelength=image_resolution)
-else:
-    raise NotImplementedError
-model.cuda()
+    img_dataset = dataio.ImageFile(full_path)
+    coord_dataset = dataio.Implicit2DWrapper(img_dataset, sidelength=128, compute_diff='none')
+    image_resolution = (128, 128)
 
-root_path = os.path.join(opt.logging_root, opt.experiment_name)
+    dataloader = DataLoader(coord_dataset, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)
 
-# Define the loss
-loss_fn = partial(loss_functions.image_mse, None)
-summary_fn = partial(utils.write_image_summary, image_resolution)
+    # Define the model.
+    if opt.model_type == 'sine' or opt.model_type == 'relu' or opt.model_type == 'tanh' or opt.model_type == 'selu' or opt.model_type == 'elu'\
+            or opt.model_type == 'softplus':
+        model = modules.SingleBVPNet(type=opt.model_type, mode='mlp', out_features=3,
+                                     hidden_features=128, sidelength=image_resolution)
+    elif opt.model_type == 'rbf' or opt.model_type == 'nerf':
+        model = modules.SingleBVPNet(type='relu', mode=opt.model_type, sidelength=image_resolution)
+    else:
+        raise NotImplementedError
+    model.cuda()
 
-training.train(model=model, train_dataloader=dataloader, epochs=opt.num_epochs, lr=opt.lr,
-               steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
-               model_dir=root_path, loss_fn=loss_fn, summary_fn=summary_fn)
+    root_path = os.path.join(opt.logging_root, file_name)
+
+    # Define the loss
+    loss_fn = partial(loss_functions.image_mse, None)
+    summary_fn = partial(utils.write_image_summary, image_resolution)
+
+    training.train(model=model, train_dataloader=dataloader, epochs=opt.num_epochs, lr=opt.lr,
+                   steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
+                   model_dir=root_path, loss_fn=loss_fn, summary_fn=summary_fn)
