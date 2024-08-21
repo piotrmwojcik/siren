@@ -36,7 +36,7 @@ p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained mo
 opt = p.parse_args()
 
 img_dataset = dataio.ImageFile('./data/red_car.png')
-coord_dataset = dataio.Implicit2DWrapper(img_dataset, sidelength=128, compute_diff='all')
+coord_dataset = dataio.Implicit2DWrapper(img_dataset, sidelength=128, compute_diff='none')
 image_resolution = (128, 128)
 
 dataloader = DataLoader(coord_dataset, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)
