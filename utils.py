@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import dataio
 import os
+from skimage import measure
 import diff_operators
 from torchvision.utils import make_grid, save_image
 import skimage.measure as measure
