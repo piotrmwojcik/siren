@@ -19,7 +19,7 @@ p.add_argument('--experiment_name', type=str, required=True,
 # General training options
 p.add_argument('--batch_size', type=int, default=1)
 p.add_argument('--lr', type=float, default=1e-4, help='learning rate. default=1e-4')
-p.add_argument('--num_epochs', type=int, default=10000,
+p.add_argument('--num_epochs', type=int, default=15000,
                help='Number of epochs to train for.')
 
 p.add_argument('--epochs_til_ckpt', type=int, default=10000,
@@ -54,7 +54,7 @@ for png_file in png_files:
     if opt.model_type == 'sine' or opt.model_type == 'relu' or opt.model_type == 'tanh' or opt.model_type == 'selu' or opt.model_type == 'elu'\
             or opt.model_type == 'softplus':
         model = modules.SingleBVPNet(type='relu', mode='mlp', out_features=3,
-                                     hidden_features=256, sidelength=image_resolution)
+                                     hidden_features=128, sidelength=image_resolution)
     elif opt.model_type == 'rbf' or opt.model_type == 'nerf':
         model = modules.SingleBVPNet(type='relu', mode=opt.model_type, sidelength=image_resolution)
     else:
