@@ -35,7 +35,7 @@ p.add_argument('--model_type', type=str, default='sine',
 p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained model.')
 opt = p.parse_args()
 
-png_files = glob.glob(os.path.join('/data/pwojcik/sh_raw_test/cars', "*.png"))
+png_files = glob.glob(os.path.join('/data/pwojcik/sh_raw_test/cars_500', "*.png"))
 
 # Iterate over the list of .png files and print full paths
 for png_file in png_files:
@@ -53,7 +53,7 @@ for png_file in png_files:
     # Define the model.
     if opt.model_type == 'sine' or opt.model_type == 'relu' or opt.model_type == 'tanh' or opt.model_type == 'selu' or opt.model_type == 'elu'\
             or opt.model_type == 'softplus':
-        model = modules.SingleBVPNet(type=opt.model_type, mode='mlp', out_features=3,
+        model = modules.SingleBVPNet(type='relu', mode='mlp', out_features=3,
                                      hidden_features=128, sidelength=image_resolution)
     elif opt.model_type == 'rbf' or opt.model_type == 'nerf':
         model = modules.SingleBVPNet(type='relu', mode=opt.model_type, sidelength=image_resolution)
