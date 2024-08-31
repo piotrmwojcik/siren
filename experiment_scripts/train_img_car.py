@@ -54,7 +54,7 @@ for png_file in png_files:
     if opt.model_type == 'sine' or opt.model_type == 'relu' or opt.model_type == 'tanh' or opt.model_type == 'selu' or opt.model_type == 'elu'\
             or opt.model_type == 'softplus':
         model = modules.SingleBVPNet(type='relu', mode='mlp', out_features=3,
-                                     hidden_features=128, sidelength=image_resolution)
+                                     hidden_features=256, sidelength=image_resolution)
     elif opt.model_type == 'rbf' or opt.model_type == 'nerf':
         model = modules.SingleBVPNet(type='relu', mode=opt.model_type, sidelength=image_resolution)
     else:
