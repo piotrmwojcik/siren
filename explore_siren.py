@@ -274,8 +274,6 @@ for l in state_dict:
 input = torch.hstack(input).cuda()
 siren_example = generate_mlp_from_weights(input)#.cuda()
 model_input = get_mgrid(128, 2).unsqueeze(0)
-print('!!!')
-print(input.shape)
 img, _ = siren_example(model_input)
 print()
 fig, axes = plt.subplots(1, 2, figsize=(18, 6))

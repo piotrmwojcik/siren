@@ -178,7 +178,7 @@ class SingleBVPNet(MetaModule):
 
         self.image_downsampling = ImageDownsampling(sidelength=kwargs.get('sidelength', None),
                                                     downsample=kwargs.get('downsample', False))
-        self.gff = GaussianFourierFeatureTransform(mapping_dim=hidden_features  )
+        self.gff = GaussianFourierFeatureTransform(mapping_dim=hidden_features )
         self.net = FCBlock(in_features=in_features, out_features=out_features, num_hidden_layers=num_hidden_layers,
                            hidden_features=hidden_features, outermost_linear=True, nonlinearity=type)
         print(self)
@@ -199,9 +199,10 @@ class SingleBVPNet(MetaModule):
         elif self.mode == 'nerf':
             coords = self.positional_encoding(coords)
 
-        print('!!!')
+        coords_gff = self.gff(x)
+        print('!!!!')
+        print(coords_gff.shape)
         print(coords.shape)
-        #coords = self.gff(x)
 
         output = self.net(coords, get_subdict(params, 'net'))
         return {'model_in': coords_org, 'model_out': output}
