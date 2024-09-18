@@ -337,6 +337,10 @@ def write_image_summary(image_resolution, model, model_input, gt,
     img_laplace = diff_operators.laplace(model_output['model_out'], model_output['model_in'])
 
 
+    print('!!!')
+    print(img_gradient.shape)
+    print(img_laplace.shape)
+
     output_vs_gt = torch.cat((gt_img, pred_img), dim=-1)
     writer.add_image(prefix + 'gt_vs_pred', make_grid(output_vs_gt, scale_each=False, normalize=True),
                      global_step=total_steps)
