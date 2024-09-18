@@ -2,6 +2,7 @@
 import sys
 import os
 from PIL import Image
+from torch.utils.data import DataLoader, Dataset
 sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ) )
 
 import dataio, meta_modules, utils, training, loss_functions, modules
