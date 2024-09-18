@@ -1,6 +1,7 @@
 # Enable import from parent package
 import sys
 import os
+from torchvision import transforms
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ) )
