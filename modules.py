@@ -177,6 +177,9 @@ class ImplicitMLP(nn.Module):
         coords_org = model_input['coords'].clone().detach().requires_grad_(True)
         coords = coords_org
 
+        print('!!!')
+        print(coords.shape)
+
         x = self.gff(coords)
         x = rearrange(x, "b c h w -> (b h w) c")  # Flatten the images
         x = self.linear1(x)
