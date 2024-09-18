@@ -13,27 +13,6 @@ import configargparse
 from functools import partial
 
 
-class SingleImageDataset(Dataset):
-    def __init__(self, image_path, transform=None):
-        self.image_path = image_path
-        self.transform = transform
-        self.image = Image.open(self.image_path)
-
-    def __len__(self):
-        return 1  # Single image
-
-    def __getitem__(self, idx):
-        image = self.image
-        if self.transform:
-            image = self.transform(image)
-        return image
-
-# Image transformations (resize and convert to tensor)
-transform = transforms.Compose([
-    transforms.Resize((64, 64)),     # Resize image to 64x64
-    #transforms.ToTensor()            # Convert image to tensor
-])
-
 p = configargparse.ArgumentParser()
 p.add('-c', '--config_filepath', required=False, is_config_file=True, help='Path to config file.')
 
@@ -62,7 +41,7 @@ p.add_argument('--model_type', type=str, default='sine',
 p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained model.')
 opt = p.parse_args()
 
-img_dataset = single_image_dataset = SingleImageDataset(image_path=opt.image_path, transform=transform)
+img_dataset = ImageFile(opt.image_path)
 
 coord_dataset = dataio.Implicit2DWrapper(img_dataset, sidelength=64, compute_diff='none')
 image_resolution = (64, 64)
