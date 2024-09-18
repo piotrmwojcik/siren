@@ -38,7 +38,7 @@ p.add_argument('--model_type', type=str, default='sine',
 p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained model.')
 opt = p.parse_args()
 
-img_dataset = Image.open(image_path)
+img_dataset = Image.open(opt.image_path)
 img_resized = img_dataset.resize((64, 64))
 
 coord_dataset = dataio.Implicit2DWrapper(img_dataset, sidelength=64, compute_diff='none')
