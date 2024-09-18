@@ -333,13 +333,15 @@ def write_image_summary(image_resolution, model, model_input, gt,
     gt_img = dataio.lin2img(gt['img'], image_resolution)
     pred_img = dataio.lin2img(model_output['model_out'], image_resolution)
 
+
     img_gradient = diff_operators.gradient(model_output['model_out'], model_output['model_in'])
     img_laplace = diff_operators.laplace(model_output['model_out'], model_output['model_in'])
 
+    b, c, h, w = img_gradient.shape
+    img_gradient = img_gradient.view(b, c, h*w)
 
-    print('!!!')
-    print(img_gradient.shape)
-    print(img_laplace.shape)
+    b, c, h, w = img_laplace.shape
+    img_laplace = img_laplace.view(b, c, h*w)
 
     output_vs_gt = torch.cat((gt_img, pred_img), dim=-1)
     writer.add_image(prefix + 'gt_vs_pred', make_grid(output_vs_gt, scale_each=False, normalize=True),
