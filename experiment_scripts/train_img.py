@@ -1,6 +1,7 @@
 # Enable import from parent package
 import sys
 import os
+import numpy as np
 from torchvision import transforms
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
