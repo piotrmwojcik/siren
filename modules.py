@@ -160,12 +160,40 @@ class FCBlock(MetaModule):
         return activations
 
 
+class FMMLinear(nn.Module):
+    """
+    FMM layer via BMM instead of F.conv
+    """
+    def __init__(
+        self,
+        in_channel: int,
+        out_channel: int,
+        factorization_rank: int):
+
+        super().__init__()
+
+        self.in_channel = in_channel
+        self.out_channel = out_channel
+        self.rank = factorization_rank
+
+        self.left_matrix = nn.Parameter(torch.randn(out_channel, factorization_rank))
+        self.right_matrix = nn.Parameter(torch.randn(factorization_rank, in_channel))
+        self.bias = nn.Parameter(torch.zeros(out_channel).fill_(0))
+
+    def forward(self, input: Tensor) -> Tensor:
+
+        W = left_matrix @ right_matrix # [batch_size, out_channel, in_channel]
+        out = W @ input + self.bias
+
+        return out
+
+
 class ImplicitMLP(nn.Module):
     def __init__(self):
         super(ImplicitMLP, self).__init__()
         self.gff = GaussianFourierFeatureTransform(mapping_dim=64)
-        self.linear1 = nn.Linear(2 * 64, 164)
-        self.linear2 = nn.Linear(164, 128)
+        self.linear1 = nn.Linear(2 * 64, 256)
+        self.linear2 = FMMLinear(256, 128, 10)
         self.linear3 = nn.Linear(128, 64)
         self.linear4 = nn.Linear(64, 32)
         self.linear5 = nn.Linear(32, 3)
