@@ -1,6 +1,7 @@
 # Enable import from parent package
 import sys
 import os
+from PIL import Image
 sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ) )
 
 import dataio, meta_modules, utils, training, loss_functions, modules
