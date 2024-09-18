@@ -41,7 +41,7 @@ p.add_argument('--model_type', type=str, default='sine',
 p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained model.')
 opt = p.parse_args()
 
-img_dataset = ImageFile(opt.image_path)
+img_dataset = dataio.ImageFile(opt.image_path)
 
 coord_dataset = dataio.Implicit2DWrapper(img_dataset, sidelength=64, compute_diff='none')
 image_resolution = (64, 64)
