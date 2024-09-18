@@ -188,7 +188,7 @@ class ImplicitMLP(nn.Module):
         x = self.linear4(x)
         x = F.relu(x)
         x = self.linear5(x)
-        output = x.reshape(1, 3, h, w)
+        output = x.reshape(1, 3, h, w).permute(0, 2, 3, 1)
 
         return {'model_in': coords_org, 'model_out': output}
 
