@@ -191,7 +191,7 @@ class FMMLinear(nn.Module):
 
         if self.bias is not None:
             # Initialize bias uniformly
-            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(Q)
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(W)
             bound = 1 / math.sqrt(fan_in)
             nn.init.uniform_(self.bias, -bound, bound)
 
