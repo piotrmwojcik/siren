@@ -166,9 +166,9 @@ class ImplicitMLP(nn.Module):
         self.gff = GaussianFourierFeatureTransform(mapping_dim=64)
         self.linear1 = nn.Linear(2 * 64, 128)
         self.linear2 = nn.Linear(128, 128)
-        self.linear3 = nn.Linear(128, 32)
-        self.linear4 = nn.Linear(32, 16)
-        self.linear5 = nn.Linear(16, 3)
+        self.linear3 = nn.Linear(128, 64)
+        self.linear4 = nn.Linear(64, 32)
+        self.linear5 = nn.Linear(32, 3)
 
     def forward(self, model_input):
         h = 64
