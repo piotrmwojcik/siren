@@ -334,6 +334,13 @@ def write_image_summary(image_resolution, model, model_input, gt,
     pred_img = dataio.lin2img(model_output['model_out'], image_resolution)
 
     gt_img = dataio.rescale_img((gt_img+1) / 2, mode='clamp').permute(0, 2, 3, 1).squeeze(0).detach().cpu().numpy()
+    output_vs_gt = torch.cat((gt_img, pred_img), dim=-1)
+    writer.add_image(prefix + 'gt_vs_pred', make_grid(output_vs_gt, scale_each=False, normalize=True),
+                     global_step=total_steps)
+
+    pred_img = dataio.rescale_img((pred_img + 1) / 2, mode='clamp').permute(0, 2, 3, 1).squeeze(
+        0).detach().cpu().numpy()
+
     if 'gradients' in gt_img:
         gt_grad = dataio.grads2img(dataio.lin2img(gt['gradients'])).permute(1, 2, 0).squeeze().detach().cpu().numpy()
         gt_lapl = cv2.cvtColor(cv2.applyColorMap(dataio.to_uint8(dataio.rescale_img(
@@ -342,12 +349,7 @@ def write_image_summary(image_resolution, model, model_input, gt,
         img_gradient = diff_operators.gradient(model_output['model_out'], model_output['model_in'])
         img_laplace = diff_operators.laplace(model_output['model_out'], model_output['model_in'])
 
-        output_vs_gt = torch.cat((gt_img, pred_img), dim=-1)
-        writer.add_image(prefix + 'gt_vs_pred', make_grid(output_vs_gt, scale_each=False, normalize=True),
-                         global_step=total_steps)
 
-        pred_img = dataio.rescale_img((pred_img + 1) / 2, mode='clamp').permute(0, 2, 3, 1).squeeze(
-            0).detach().cpu().numpy()
         pred_grad = dataio.grads2img(dataio.lin2img(img_gradient)).permute(1, 2, 0).squeeze().detach().cpu().numpy()
         pred_lapl = cv2.cvtColor(cv2.applyColorMap(dataio.to_uint8(dataio.rescale_img(
             dataio.lin2img(img_laplace), perc=2).permute(0, 2, 3, 1).squeeze(0).detach().cpu().numpy()),
