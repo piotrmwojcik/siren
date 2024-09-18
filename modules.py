@@ -158,6 +158,31 @@ class FCBlock(MetaModule):
         return activations
 
 
+class ImplicitMLP(nn.Module):
+    def __init__(self):
+        super(ImplicitMLP, self).__init__()
+        self.gff = GaussianFourierFeatureTransform(mapping_dim=128)
+        self.linear1 = nn.Linear(2 * 128, 256)
+        self.linear2 = nn.Linear(256, 128)
+        self.linear3 = nn.Linear(128, 32)
+        self.linear4 = nn.Linear(32, 16)
+        self.linear5 = nn.Linear(16, 3)
+
+    def forward(self, x):
+        x = self.gff(x)
+        x = rearrange(x, "b c h w -> (b h w) c")  # Flatten the images
+        x = self.linear1(x)
+        x = F.relu(x)
+        x = self.linear2(x)
+        x = F.relu(x)
+        x = self.linear3(x)
+        x = F.relu(x)
+        x = self.linear4(x)
+        x = F.relu(x)
+        x = self.linear5(x)
+        return x.reshape(1, 3, h, w)
+
+
 class SingleBVPNet(MetaModule):
     '''A canonical representation network for a BVP.'''
 
@@ -178,7 +203,7 @@ class SingleBVPNet(MetaModule):
 
         self.image_downsampling = ImageDownsampling(sidelength=kwargs.get('sidelength', None),
                                                     downsample=kwargs.get('downsample', False))
-        self.gff = GaussianFourierFeatureTransform(mapping_dim=hidden_features )
+        #self.gff = GaussianFourierFeatureTransform(mapping_dim=hidden_features )
         self.net = FCBlock(in_features=in_features, out_features=out_features, num_hidden_layers=num_hidden_layers,
                            hidden_features=hidden_features, outermost_linear=True, nonlinearity=type)
         print(self)
@@ -198,12 +223,6 @@ class SingleBVPNet(MetaModule):
             coords = self.rbf_layer(coords)
         elif self.mode == 'nerf':
             coords = self.positional_encoding(coords)
-
-        print('!!!!')
-        print(coords.shape)
-        coords_gff = self.gff(coords)
-        print(coords_gff.shape)
-
 
         output = self.net(coords, get_subdict(params, 'net'))
         return {'model_in': coords_org, 'model_out': output}
