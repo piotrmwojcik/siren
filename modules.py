@@ -169,7 +169,10 @@ class ImplicitMLP(nn.Module):
         self.linear5 = nn.Linear(16, 3)
 
     def forward(self, x):
-        x = self.gff(x)
+        coords_org = model_input['coords'].clone().detach().requires_grad_(True)
+        coords = coords_org
+
+        x = self.gff(coords)
         x = rearrange(x, "b c h w -> (b h w) c")  # Flatten the images
         x = self.linear1(x)
         x = F.relu(x)
@@ -180,7 +183,9 @@ class ImplicitMLP(nn.Module):
         x = self.linear4(x)
         x = F.relu(x)
         x = self.linear5(x)
-        return x.reshape(1, 3, h, w)
+        output = x.reshape(1, 3, h, w)
+
+        return {'model_in': coords_org, 'model_out': output}
 
 
 class SingleBVPNet(MetaModule):
