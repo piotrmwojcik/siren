@@ -330,6 +330,10 @@ def write_video_summary(vid_dataset, model, model_input, gt, model_output, write
 def write_image_summary(image_resolution, model, model_input, gt,
                         model_output, writer, total_steps, prefix='train_'):
 
+    print('!!!!')
+    print(gt['img'].shape)
+    print(model_output['model_out'].shape)
+
     gt_img = dataio.lin2img(gt['img'], image_resolution)
     pred_img = dataio.lin2img(model_output['model_out'], image_resolution)
 
