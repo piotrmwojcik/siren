@@ -180,10 +180,24 @@ class FMMLinear(nn.Module):
         self.right_matrix = nn.Parameter(torch.randn(factorization_rank, in_channel))
         self.bias = nn.Parameter(torch.zeros(out_channel).fill_(0))
 
-    def forward(self, input: Tensor) -> Tensor:
+        self.reset_parameters()
 
+    def reset_parameters(self):
+        # Standard initialization (usually Xavier or Kaiming)
+        nn.init.kaiming_uniform_(self.left_matrix, a=math.sqrt(5))
+        nn.init.kaiming_uniform_(self.right_matrix, a=math.sqrt(5))
+
+        W = left_matrix @ right_matrix
+
+        if self.bias is not None:
+            # Initialize bias uniformly
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(Q)
+            bound = 1 / math.sqrt(fan_in)
+            nn.init.uniform_(self.bias, -bound, bound)
+
+    def forward(self, input):
         W = left_matrix @ right_matrix # [batch_size, out_channel, in_channel]
-        out = W @ input + self.bias
+        out = F.linear(input, W, self.bias)
 
         return out
 
