@@ -196,7 +196,7 @@ class FMMLinear(nn.Module):
             nn.init.uniform_(self.bias, -bound, bound)
 
     def forward(self, input):
-        W = left_matrix @ right_matrix # [batch_size, out_channel, in_channel]
+        W = self.left_matrix @ self.right_matrix # [batch_size, out_channel, in_channel]
         out = F.linear(input, W, self.bias)
 
         return out
