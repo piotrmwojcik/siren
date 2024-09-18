@@ -177,9 +177,6 @@ class ImplicitMLP(nn.Module):
         coords_org = model_input['coords'].clone().detach().requires_grad_(True)
         coords = coords_org
 
-        print('!!!!!')
-        print(coords.shape)
-
         x = self.gff(coords)
         x = rearrange(x, "b c h w -> (b h w) c")  # Flatten the images
         x = self.linear1(x)
@@ -190,11 +187,7 @@ class ImplicitMLP(nn.Module):
         x = F.relu(x)
         x = self.linear4(x)
         x = F.relu(x)
-        print('!!ss!')
-        print(x.shape)
-        output = self.linear5(x)
-        print('!!!')
-        print(output.shape)
+        output = self.linear5(x).unsqueeze(0)
 
         return {'model_in': coords_org, 'model_out': output}
 
