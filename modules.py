@@ -187,7 +187,7 @@ class ImplicitMLP(nn.Module):
         x = F.relu(x)
         x = self.linear4(x)
         x = F.relu(x)
-        output = self.linear5(x).unsqueeze(0)
+        output = self.linear5(x)
 
         return {'model_in': coords_org, 'model_out': output}
 

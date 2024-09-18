@@ -607,7 +607,7 @@ class Implicit2DWrapper(torch.utils.data.Dataset):
 
         self.compute_diff = compute_diff
         self.dataset = dataset
-        self.mgrid = get_grid(sidelength[0], sidelength[0], b=0)
+        self.mgrid = get_grid(sidelength[0], sidelength[0], b=1)
 
     def __len__(self):
         return len(self.dataset)
