@@ -31,7 +31,7 @@ class SingleImageDataset(Dataset):
 # Image transformations (resize and convert to tensor)
 transform = transforms.Compose([
     transforms.Resize((64, 64)),     # Resize image to 64x64
-    transforms.ToTensor()            # Convert image to tensor
+    #transforms.ToTensor()            # Convert image to tensor
 ])
 
 p = configargparse.ArgumentParser()
