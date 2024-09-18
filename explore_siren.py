@@ -208,8 +208,8 @@ img_siren2 = Siren(in_features=2, out_features=3, hidden_features=256,
                   hidden_layers=3, outermost_linear=True)
 #img_siren.print_layer_weights()
 
-img_siren1.cuda()
-img_siren2.cuda()
+img_siren1#.cuda()
+img_siren2#.cuda()
 
 total_steps = 500  # Since the whole image is our dataset, this just means 500 gradient descent steps.
 steps_til_summary = 10
@@ -236,9 +236,7 @@ def generate_mlp_from_weights(weights):
 
 
 model_input, ground_truth = next(iter(dataloader))
-model_input, ground_truth = model_input.cuda(), ground_truth.cuda()
-
-
+model_input, ground_truth = model_input, ground_truth
 
 for step in range(total_steps):
     model_output1, coords1 = img_siren1(model_input)
@@ -274,11 +272,12 @@ for l in state_dict:
     layer_names.append(l)
     input.append(state_dict[l].flatten())
 input = torch.hstack(input).cuda()
-siren_example = generate_mlp_from_weights(input).cuda()
-model_input = get_mgrid(128, 2).cuda().unsqueeze(0)
+siren_example = generate_mlp_from_weights(input)#.cuda()
+model_input = get_mgrid(128, 2).unsqueeze(0)
 print('!!!')
 print(input.shape)
 img, _ = siren_example(model_input)
+print()
 fig, axes = plt.subplots(1, 2, figsize=(18, 6))
 axes[0].imshow(img.cpu().view(128, 128, 3).detach().numpy())
 save_path = os.path.join('test_output', f"final.png")
