@@ -177,7 +177,7 @@ class ImplicitMLP(nn.Module):
         coords_org = model_input['coords'].clone().detach().requires_grad_(True)
         coords = coords_org
 
-        print('!!!')
+        print('!!!!!')
         print(coords.shape)
 
         x = self.gff(coords)
