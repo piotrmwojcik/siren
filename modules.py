@@ -168,7 +168,7 @@ class ImplicitMLP(nn.Module):
         self.linear4 = nn.Linear(32, 16)
         self.linear5 = nn.Linear(16, 3)
 
-    def forward(self, x):
+    def forward(self, model_input):
         coords_org = model_input['coords'].clone().detach().requires_grad_(True)
         coords = coords_org
 
