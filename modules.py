@@ -190,6 +190,8 @@ class ImplicitMLP(nn.Module):
         x = F.relu(x)
         x = self.linear4(x)
         x = F.relu(x)
+        print('!!ss!')
+        print(x.shape)
         output = self.linear5(x)
         print('!!!')
         print(output.shape)
