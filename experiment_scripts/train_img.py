@@ -79,6 +79,8 @@ for png_file in jpg_files:
         raise NotImplementedError
     model.cuda()
 
+    root_path = os.path.join(opt.logging_root, file_name)
+
     root_path = os.path.join(opt.logging_root, opt.experiment_name)
 
     # Define the loss
