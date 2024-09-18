@@ -199,7 +199,7 @@ class SingleBVPNet(MetaModule):
         elif self.mode == 'nerf':
             coords = self.positional_encoding(coords)
 
-        coords_gff = self.gff(x)
+        coords_gff = self.gff(coords)
         print('!!!!')
         print(coords_gff.shape)
         print(coords.shape)
