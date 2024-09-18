@@ -187,7 +187,7 @@ class FMMLinear(nn.Module):
         nn.init.kaiming_uniform_(self.left_matrix, a=math.sqrt(5))
         nn.init.kaiming_uniform_(self.right_matrix, a=math.sqrt(5))
 
-        W = left_matrix @ right_matrix
+        W = self.left_matrix @ self.right_matrix
 
         if self.bias is not None:
             # Initialize bias uniformly
