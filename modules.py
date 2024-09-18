@@ -188,6 +188,8 @@ class ImplicitMLP(nn.Module):
         x = self.linear4(x)
         x = F.relu(x)
         output = self.linear5(x)
+        print('!!!')
+        print(output.shape)
         output = output.reshape(output.shape[0], h*w, output.shape[3])
 
         return {'model_in': coords_org, 'model_out': output}
