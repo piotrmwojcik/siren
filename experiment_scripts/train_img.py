@@ -52,6 +52,16 @@ dataloader = DataLoader(coord_dataset, shuffle=True, batch_size=opt.batch_size, 
 if opt.model_type == 'sine' or opt.model_type == 'relu' or opt.model_type == 'tanh' or opt.model_type == 'selu' or opt.model_type == 'elu'\
         or opt.model_type == 'softplus':
     model = modules.ImplicitMLP()
+
+    state_dict = model.state_dict()
+    layers = []
+    layer_names = []
+    for l in state_dict:
+        shape = state_dict[l].shape
+        layers.append(np.prod(shape))
+        layer_names.append(l)
+    print(layers)
+
     #model = modules.SingleBVPNet(type=opt.model_type, mode='mlp', hidden_features=128, out_features=3, sidelength=image_resolution)
 elif opt.model_type == 'rbf' or opt.model_type == 'nerf':
     model = modules.SingleBVPNet(type='relu', mode=opt.model_type, hidden_features=128, out_features=3, sidelength=image_resolution)
