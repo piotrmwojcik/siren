@@ -21,6 +21,8 @@ p.add_argument('--batch_size', type=int, default=1)
 p.add_argument('--lr', type=float, default=1e-4, help='learning rate. default=1e-4')
 p.add_argument('--num_epochs', type=int, default=10000,
                help='Number of epochs to train for.')
+p.add_argument('--image_path', type=str, required=True,
+               help='Path to the gt image.')
 
 p.add_argument('--epochs_til_ckpt', type=int, default=25,
                help='Time interval in seconds until checkpoint is saved.')
@@ -35,7 +37,9 @@ p.add_argument('--model_type', type=str, default='sine',
 p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained model.')
 opt = p.parse_args()
 
-img_dataset = dataio.Camera()
+img_dataset = Image.open(image_path)
+img_resized = img_dataset.resize((64, 64))
+
 coord_dataset = dataio.Implicit2DWrapper(img_dataset, sidelength=64, compute_diff='none')
 image_resolution = (64, 64)
 
