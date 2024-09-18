@@ -199,10 +199,11 @@ class SingleBVPNet(MetaModule):
         elif self.mode == 'nerf':
             coords = self.positional_encoding(coords)
 
-        coords_gff = self.gff(coords)
         print('!!!!')
-        print(coords_gff.shape)
         print(coords.shape)
+        coords_gff = self.gff(coords)
+        print(coords_gff.shape)
+
 
         output = self.net(coords, get_subdict(params, 'net'))
         return {'model_in': coords_org, 'model_out': output}
