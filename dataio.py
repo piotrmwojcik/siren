@@ -59,6 +59,8 @@ def get_grid(h, w, b=0, norm=True, device="cpu"):
 
 
 def lin2img(tensor, image_resolution=None):
+    print('!!!')
+    print(tensor.shape)
     batch_size, num_samples, channels = tensor.shape
     if image_resolution is None:
         width = np.sqrt(num_samples).astype(int)
