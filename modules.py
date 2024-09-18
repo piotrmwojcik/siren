@@ -202,7 +202,7 @@ class ImplicitMLP(nn.Module):
     def __init__(self):
         super(ImplicitMLP, self).__init__()
         self.gff = GaussianFourierFeatureTransform(mapping_dim=128)
-        self.linear2 = nn.Linear(2 * 128, 256)
+        self.linear1 = nn.Linear(2 * 128, 256)
         self.linear2 = FMMLinear(256, 128, 10)
         self.linear3 = nn.Linear(128, 32)
         self.linear4 = nn.Linear(32, 16)
