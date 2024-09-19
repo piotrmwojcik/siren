@@ -45,6 +45,8 @@ opt = p.parse_args()
 
 jpg_files = glob.glob(os.path.join('/data/pwojcik/celeb1k/', "*.jpg"))
 
+B = torch.randn((num_input_channels, mapping_dim)) * scale
+
 for png_file in jpg_files:
     full_path = os.path.abspath(png_file)
     file_name = os.path.basename(png_file)
@@ -58,10 +60,12 @@ for png_file in jpg_files:
 
     dataloader = DataLoader(coord_dataset, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)
 
+    B = torch.randn((2, 128)) * 10
+
     # Define the model.
     if opt.model_type == 'sine' or opt.model_type == 'relu' or opt.model_type == 'tanh' or opt.model_type == 'selu' or opt.model_type == 'elu'\
             or opt.model_type == 'softplus':
-        model = modules.ImplicitMLP()
+        model = modules.ImplicitMLP(B=B)
 
         state_dict = model.state_dict()
         layers = []
