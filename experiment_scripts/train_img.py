@@ -50,6 +50,8 @@ num_input_channels=2
 mapping_dim=128
 scale = 10
 B = torch.randn((num_input_channels, mapping_dim)) * scale
+save_path = '/data/pwojcik/siren/random_mod/B.pth'
+torch.save(B, save_path)
 
 for png_file in jpg_files:
     full_path = os.path.abspath(png_file)
