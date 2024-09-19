@@ -46,6 +46,8 @@ opt = p.parse_args()
 
 jpg_files = glob.glob(os.path.join('/data/pwojcik/celeb1k/', "*.jpg"))
 
+num_input_channels=2
+mapping_dim=128
 B = torch.randn((num_input_channels, mapping_dim)) * scale
 
 for png_file in jpg_files:
