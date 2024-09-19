@@ -227,6 +227,11 @@ class ImplicitMLP(nn.Module):
         x = F.relu(x)
         output = self.linear5(x).unsqueeze(0)
 
+        print(model_input['coords'])
+        print()
+        print(coords_org)
+        print()
+        print()
         return {'model_in': coords_org, 'model_out': output}
 
 
