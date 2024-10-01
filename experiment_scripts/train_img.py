@@ -8,12 +8,14 @@ from torchvision import transforms
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ) )
-
 import dataio, meta_modules, utils, training, loss_functions, modules
+# https://github.com/DavideBuffelli/SAME/issues/1
 
 from torch.utils.data import DataLoader
 import configargparse
 from functools import partial
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 p = configargparse.ArgumentParser()
@@ -44,16 +46,16 @@ p.add_argument('--model_type', type=str, default='sine',
 p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained model.')
 opt = p.parse_args()
 
-jpg_files = glob.glob(os.path.join('/data/pwojcik/celeb1k/', "*.jpg"))
-
+jpg_files = glob.glob(os.path.join('data/minidataset', "*.jpg"))
 num_input_channels=2
 mapping_dim=128
 scale = 10
-B = torch.randn((num_input_channels, mapping_dim)) * scale
-save_path = '/data/pwojcik/siren/random_mod/B.pth'
-torch.save(B, save_path)
-
+# B = torch.randn((num_input_channels, mapping_dim)) * scale
+save_path = 'data/minidataset/B.pth'
+# torch.save(B, save_path)
+B = torch.load(save_path)
 for png_file in jpg_files:
+    print(png_file)
     full_path = os.path.abspath(png_file)
     file_name = os.path.basename(png_file)
     print(f"Processing file: {full_path}")
@@ -87,7 +89,7 @@ for png_file in jpg_files:
         model = modules.SingleBVPNet(type='relu', mode=opt.model_type, hidden_features=128, out_features=3, sidelength=image_resolution)
     else:
         raise NotImplementedError
-    model.cuda()
+    model.to(device)
 
     root_path = os.path.join(opt.logging_root, file_name)
 
@@ -99,4 +101,4 @@ for png_file in jpg_files:
 
     training.train(model=model, train_dataloader=dataloader, epochs=opt.num_epochs, lr=opt.lr,
                    steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
-                   model_dir=root_path, loss_fn=loss_fn, summary_fn=summary_fn)
+                   model_dir=root_path, loss_fn=loss_fn, summary_fn=summary_fn, device = device)

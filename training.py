@@ -12,7 +12,7 @@ import shutil
 
 
 def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_checkpoint, model_dir, loss_fn,
-          summary_fn, val_dataloader=None, double_precision=False, clip_grad=False, use_lbfgs=False, loss_schedules=None):
+          summary_fn, device, val_dataloader=None, double_precision=False, clip_grad=False, use_lbfgs=False, loss_schedules=None):
 
     optim = torch.optim.Adam(lr=lr, params=model.parameters())
 
@@ -50,8 +50,8 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
             for step, (model_input, gt) in enumerate(train_dataloader):
                 start_time = time.time()
             
-                model_input = {key: value.cuda() for key, value in model_input.items()}
-                gt = {key: value.cuda() for key, value in gt.items()}
+                model_input = {key: value.to(device) for key, value in model_input.items()}
+                gt = {key: value.to(device) for key, value in gt.items()}
 
                 if double_precision:
                     model_input = {key: value.double() for key, value in model_input.items()}

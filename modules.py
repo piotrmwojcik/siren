@@ -3,7 +3,7 @@ from torch import nn
 from math import pi
 from einops import rearrange
 from torchmeta.modules import (MetaModule, MetaSequential)
-from torchmeta.modules.utils import get_subdict
+# from torchmeta.modules.utils import get_subdict
 import numpy as np
 from collections import OrderedDict
 import math
@@ -134,7 +134,7 @@ class FCBlock(MetaModule):
         if params is None:
             params = OrderedDict(self.named_parameters())
 
-        output = self.net(coords, params=get_subdict(params, 'net'))
+        output = self.net(coords, params=self.get_subdict(params, 'net'))
         return output
 
     def forward_with_activations(self, coords, params=None, retain_grad=False):
@@ -147,10 +147,10 @@ class FCBlock(MetaModule):
         x = coords.clone().detach().requires_grad_(True)
         activations['input'] = x
         for i, layer in enumerate(self.net):
-            subdict = get_subdict(params, 'net.%d' % i)
+            subdict = self.get_subdict(params, 'net.%d' % i)
             for j, sublayer in enumerate(layer):
                 if isinstance(sublayer, BatchLinear):
-                    x = sublayer(x, params=get_subdict(subdict, '%d' % j))
+                    x = sublayer(x, params=self.get_subdict(subdict, '%d' % j))
                 else:
                     x = sublayer(x)
 
@@ -271,7 +271,7 @@ class SingleBVPNet(MetaModule):
         elif self.mode == 'nerf':
             coords = self.positional_encoding(coords)
 
-        output = self.net(coords, get_subdict(params, 'net'))
+        output = self.net(coords, self.get_subdict(params, 'net'))
         return {'model_in': coords_org, 'model_out': output}
 
     def forward_with_activations(self, model_input):
