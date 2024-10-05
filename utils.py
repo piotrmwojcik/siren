@@ -368,7 +368,7 @@ def write_image_summary(image_resolution, model, model_input, gt,
 
 
     write_psnr(dataio.lin2img(model_output['model_out'], image_resolution),
-               dataio.lin2img(gt['img'], image_resolution), writer, total_steps, prefix+'img_')
+               dataio.lin2img(gt['img'], image_resolution), writer, total_steps, prefix)
 
 
 def write_laplace_summary(model, model_input, gt, model_output, writer, total_steps, prefix='train_'):
@@ -602,5 +602,5 @@ def write_psnr(pred_img, gt_img, writer, iter, prefix):
         psnrs.append(psnr)
         ssims.append(ssim)
 
-    writer.add_scalar(prefix + "psnr", np.mean(psnrs), iter)
-    writer.add_scalar(prefix + "ssim", np.mean(ssims), iter)
+    writer.add_scalar(f"psnr/{prefix}", np.mean(psnrs), iter)
+    # writer.add_scalar(prefix + "ssim", np.mean(ssims), iter)

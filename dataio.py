@@ -593,7 +593,7 @@ class AudioFile(Dataset):
 
 
 class Implicit2DWrapper(torch.utils.data.Dataset):
-    def __init__(self, dataset, sidelength=None, compute_diff=None):
+    def __init__(self, dataset, sidelength=None, compute_diff=None, grid='siren'):
 
         if isinstance(sidelength, int):
             sidelength = (sidelength, sidelength)
@@ -607,7 +607,10 @@ class Implicit2DWrapper(torch.utils.data.Dataset):
 
         self.compute_diff = compute_diff
         self.dataset = dataset
-        self.mgrid = get_grid(sidelength[0], sidelength[0], b=0)
+        if grid == 'siren':
+            self.mgrid = get_mgrid(sidelength)
+        else:
+            self.mgrid = get_grid(sidelength[0], sidelength[0], b=0)
 
     def __len__(self):
         return len(self.dataset)

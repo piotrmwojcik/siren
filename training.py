@@ -12,7 +12,7 @@ import shutil
 
 
 def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_checkpoint, model_dir, loss_fn,
-          summary_fn, device, val_dataloader=None, double_precision=False, clip_grad=False, use_lbfgs=False, loss_schedules=None):
+          summary_fn, device, writer, val_dataloader=None, double_precision=False, clip_grad=False, use_lbfgs=False, loss_schedules=None):
 
     optim = torch.optim.Adam(lr=lr, params=model.parameters())
 
@@ -22,6 +22,8 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
         optim = torch.optim.LBFGS(lr=lr, params=model.parameters(), max_iter=50000, max_eval=50000,
                                   history_size=50, line_search_fn='strong_wolfe')
 
+    model_name= model_dir.split('/')[-2]
+
     if os.path.exists(model_dir):
         val = input("The model directory %s exists. Overwrite? (y/n)"%model_dir)
         if val == 'y':
@@ -29,23 +31,23 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
 
     os.makedirs(model_dir)
 
-    summaries_dir = os.path.join(model_dir, 'summaries')
-    utils.cond_mkdir(summaries_dir)
+    # summaries_dir = os.path.join(model_dir, 'summaries')
+    # utils.cond_mkdir(summaries_dir)
 
     checkpoints_dir = os.path.join(model_dir, 'checkpoints')
     utils.cond_mkdir(checkpoints_dir)
 
-    writer = SummaryWriter(summaries_dir)
+    # writer = SummaryWriter(summaries_dir)
 
     total_steps = 0
     with tqdm(total=len(train_dataloader) * epochs) as pbar:
         train_losses = []
         for epoch in range(epochs):
-            if not epoch % epochs_til_checkpoint and epoch:
-                torch.save(model.state_dict(),
-                           os.path.join(checkpoints_dir, 'model_epoch_%04d.pth' % epoch))
-                np.savetxt(os.path.join(checkpoints_dir, 'train_losses_epoch_%04d.txt' % epoch),
-                           np.array(train_losses))
+            # if not epoch % epochs_til_checkpoint and epoch:
+                # torch.save(model.state_dict(),
+                #            os.path.join(checkpoints_dir, 'model_epoch_%04d.pth' % epoch))
+                # np.savetxt(os.path.join(checkpoints_dir, 'train_losses_epoch_%04d.txt' % epoch),
+                #            np.array(train_losses))
 
             for step, (model_input, gt) in enumerate(train_dataloader):
                 start_time = time.time()
@@ -77,19 +79,19 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                     single_loss = loss.mean()
 
                     if loss_schedules is not None and loss_name in loss_schedules:
-                        writer.add_scalar(loss_name + "_weight", loss_schedules[loss_name](total_steps), total_steps)
+                        # writer.add_scalar(loss_name + "_weight", loss_schedules[loss_name](total_steps), total_steps)
                         single_loss *= loss_schedules[loss_name](total_steps)
 
-                    writer.add_scalar(loss_name, single_loss, total_steps)
+                    # writer.add_scalar(loss_name, single_loss, total_steps)
                     train_loss += single_loss
 
-                train_losses.append(train_loss.item())
-                writer.add_scalar("total_train_loss", train_loss, total_steps)
+                # train_losses.append(train_loss.item())
+                # writer.add_scalar("total_train_loss", train_loss, total_steps)
 
                 if not total_steps % steps_til_summary:
                     torch.save(model.state_dict(),
                                os.path.join(checkpoints_dir, 'model_current.pth'))
-                    summary_fn(model, model_input, gt, model_output, writer, total_steps)
+                    summary_fn(model, model_input, gt, model_output, writer, total_steps, prefix=model_name)
 
                 if not use_lbfgs:
                     optim.zero_grad()
@@ -125,8 +127,8 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
 
         torch.save(model.state_dict(),
                    os.path.join(checkpoints_dir, 'model_final.pth'))
-        np.savetxt(os.path.join(checkpoints_dir, 'train_losses_final.txt'),
-                   np.array(train_losses))
+        # np.savetxt(os.path.join(checkpoints_dir, 'train_losses_final.txt'),
+        #            np.array(train_losses))
 
 
 class LinearDecaySchedule():

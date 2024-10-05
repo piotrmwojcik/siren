@@ -134,6 +134,7 @@ class FCBlock(MetaModule):
         if params is None:
             params = OrderedDict(self.named_parameters())
 
+
         output = self.net(coords, params=self.get_subdict(params, 'net'))
         return output
 
@@ -250,7 +251,7 @@ class SingleBVPNet(MetaModule):
 
         self.image_downsampling = ImageDownsampling(sidelength=kwargs.get('sidelength', None),
                                                     downsample=kwargs.get('downsample', False))
-        #self.gff = GaussianFourierFeatureTransform(mapping_dim=hidden_features )
+        #self.gff = GaussianFourierFeatuareTransform(mapping_dim=hidden_features )
         self.net = FCBlock(in_features=in_features, out_features=out_features, num_hidden_layers=num_hidden_layers,
                            hidden_features=hidden_features, outermost_linear=True, nonlinearity=type)
         print(self)
@@ -264,14 +265,15 @@ class SingleBVPNet(MetaModule):
         coords = coords_org
 
         # various input processing methods for different applications
-        if self.image_downsampling.downsample:
-            coords = self.image_downsampling(coords)
-        if self.mode == 'rbf':
-            coords = self.rbf_layer(coords)
-        elif self.mode == 'nerf':
-            coords = self.positional_encoding(coords)
+        # if self.image_downsampling.downsample:
+        #     coords = self.image_downsampling(coords)
+        # if self.mode == 'rbf':
+        #     coords = self.rbf_layer(coords)
+        # elif self.mode == 'nerf':
+        #     coords = self.positional_encoding(coords)
 
         output = self.net(coords, self.get_subdict(params, 'net'))
+
         return {'model_in': coords_org, 'model_out': output}
 
     def forward_with_activations(self, model_input):
@@ -304,6 +306,8 @@ class ImageDownsampling(nn.Module):
     '''Generate samples in u,v plane according to downsampling blur kernel'''
 
     def __init__(self, sidelength, downsample=False):
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
         super().__init__()
         if isinstance(sidelength, int):
             self.sidelength = (sidelength, sidelength)
@@ -311,7 +315,7 @@ class ImageDownsampling(nn.Module):
             self.sidelength = sidelength
 
         if self.sidelength is not None:
-            self.sidelength = torch.Tensor(self.sidelength).cuda().float()
+            self.sidelength = torch.Tensor(self.sidelength).to(self.device).float()
         else:
             assert downsample is False
         self.downsample = downsample
