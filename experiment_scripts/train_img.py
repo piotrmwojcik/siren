@@ -46,6 +46,7 @@ p.add_argument('--model_type', type=str, default='sine',
                     'and in the future: "mixed" (first layer sine, other layers tanh)')
 
 p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained model.')
+
 opt = p.parse_args()
 
 jpg_files = glob.glob(os.path.join('data/minidataset', "*.jpg"))
@@ -65,8 +66,8 @@ summaries_dir_our = os.path.join(opt.logging_root, 'summary', 'our')
 writer_siren = SummaryWriter(summaries_dir_siren)
 writer_our = SummaryWriter(summaries_dir_our)
 
-for png_file in jpg_files:
-    print(png_file)
+for png_file in jpg_files[:1000]:
+    # print(png_file)
     full_path = os.path.abspath(png_file)
     file_name = os.path.basename(png_file)
     print(f"Processing file: {full_path}")
@@ -75,11 +76,10 @@ for png_file in jpg_files:
     img_dataset = dataio.ImageFile(full_path)
     coord_dataset = dataio.Implicit2DWrapper(img_dataset, sidelength=64, compute_diff='none', grid='our')
     image_resolution = (64, 64)
-
+    #
     dataloader = DataLoader(coord_dataset, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)
 
-    data_iter = iter(dataloader)
-    inputs, targets = next(data_iter)
+
     #B = torch.randn((2, 128)) * 10
 
     # Define the model.
@@ -95,7 +95,7 @@ for png_file in jpg_files:
             shape = state_dict[l].shape
             layers.append(np.prod(shape))
             layer_names.append(l)
-        print(layers)
+        # print(layers)
 
         #model = modules.SingleBVPNet(type=opt.model_type, mode='mlp', hidden_features=128, out_features=3, sidelength=image_resolution)
     # elif opt.model_type == 'rbf' or opt.model_type == 'nerf':
@@ -130,7 +130,9 @@ for png_file in jpg_files:
                    model_dir=root_path_siren, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
                    writer=writer_siren)
 
-    training.train(model=model_our, train_dataloader=dataloader, epochs=opt.num_epochs, lr=1e-3,
+    training.train(model=model_our, train_dataloader=dataloader, epochs=15001, lr=5e-4,
                    steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
                    model_dir=root_path_our, loss_fn=loss_fn, summary_fn=summary_fn, device = device, writer=writer_our)
+
+
 

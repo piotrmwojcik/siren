@@ -65,7 +65,7 @@ class NeuralProcessImplicit2DHypernet(nn.Module):
                                       hypo_module=self.hypo_net)
         self.set_encoder = modules.SetEncoder(in_features=in_features, out_features=latent_dim, num_hidden_layers=2,
                                               hidden_features=latent_dim, nonlinearity=encoder_nl)
-        print(self)
+        # print(self)
 
     def freeze_hypernet(self):
         for param in self.hyper_net.parameters():

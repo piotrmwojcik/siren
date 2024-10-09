@@ -194,6 +194,7 @@ class FMMLinear(nn.Module):
 
     def forward(self, input):
         W = self.left_matrix @ self.right_matrix # [batch_size, out_channel, in_channel]
+        W /= np.sqrt(self.rank)
         out = F.linear(input, W, self.bias)
 
         return out
@@ -254,7 +255,7 @@ class SingleBVPNet(MetaModule):
         #self.gff = GaussianFourierFeatuareTransform(mapping_dim=hidden_features )
         self.net = FCBlock(in_features=in_features, out_features=out_features, num_hidden_layers=num_hidden_layers,
                            hidden_features=hidden_features, outermost_linear=True, nonlinearity=type)
-        print(self)
+        # print(self)
 
     def forward(self, model_input, params=None):
         if params is None:
