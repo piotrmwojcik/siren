@@ -14,6 +14,8 @@ import shutil
 def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_checkpoint, model_dir, loss_fn,
           summary_fn, device, writer, val_dataloader=None, double_precision=False, clip_grad=False, use_lbfgs=False, loss_schedules=None):
 
+    psnrs = []
+
     optim = torch.optim.Adam(lr=lr, params=model.parameters())
 
     # copy settings from Raissi et al. (2019) and here 
@@ -91,7 +93,7 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                 if not total_steps % steps_til_summary:
                     torch.save(model.state_dict(),
                                os.path.join(checkpoints_dir, 'model_current.pth'))
-                    summary_fn(model, model_input, gt, model_output, writer, total_steps, prefix=model_name)
+                    psnrs.append(utils.calculate_psnr((64,64), model_output, gt))
 
                 if not use_lbfgs:
                     optim.zero_grad()
@@ -127,8 +129,9 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
 
         torch.save(model.state_dict(),
                    os.path.join(checkpoints_dir, 'model_final.pth'))
-        # np.savetxt(os.path.join(checkpoints_dir, 'train_losses_final.txt'),
-        #            np.array(train_losses))
+
+    return psnrs
+
 
 
 class LinearDecaySchedule():

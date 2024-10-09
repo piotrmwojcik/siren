@@ -371,6 +371,9 @@ def write_image_summary(image_resolution, model, model_input, gt,
                dataio.lin2img(gt['img'], image_resolution), writer, total_steps, prefix)
 
 
+
+
+
 def write_laplace_summary(model, model_input, gt, model_output, writer, total_steps, prefix='train_'):
     # Plot comparison images
     gt_img = dataio.lin2img(gt['img'])
@@ -604,3 +607,30 @@ def write_psnr(pred_img, gt_img, writer, iter, prefix):
 
     writer.add_scalar(f"psnr/{prefix}", np.mean(psnrs), iter)
     # writer.add_scalar(prefix + "ssim", np.mean(ssims), iter)
+
+def calculate_psnr(image_resolution, model_output, gt):
+
+    pred_img = dataio.lin2img(model_output['model_out'], image_resolution)
+    gt_img = dataio.lin2img(gt['img'], image_resolution)
+
+    batch_size = pred_img.shape[0]
+
+    pred_img = pred_img.detach().cpu().numpy()
+    gt_img = gt_img.detach().cpu().numpy()
+
+    psnrs, ssims = list(), list()
+    for i in range(batch_size):
+        p = pred_img[i].transpose(1, 2, 0)
+        trgt = gt_img[i].transpose(1, 2, 0)
+
+        p = (p / 2.) + 0.5
+        p = np.clip(p, a_min=0., a_max=1.)
+
+        trgt = (trgt / 2.) + 0.5
+
+        # ssim = skimage.metrics.structural_similarity(p, trgt, channel_axis=2, data_range=1)
+        psnr = skimage.metrics.peak_signal_noise_ratio(p, trgt, data_range=1)
+        psnrs.append(psnr)
+        # ssims.append(ssim)
+
+    return np.mean(psnr)

@@ -29,9 +29,12 @@ p.add_argument('--experiment_name', type=str, required=True,
 
 # General training options
 p.add_argument('--batch_size', type=int, default=1)
-p.add_argument('--lr', type=float, default=1e-4, help='learning rate. default=1e-4')
-p.add_argument('--num_epochs', type=int, default=10001,
+p.add_argument('--lr_siren', type=float, default=1e-4, help='learning rate. default=1e-4')
+p.add_argument('--lr_ours', type=float, default=5e-4)
+p.add_argument('--num_epochs_siren', type=int, default=10001,
                help='Number of epochs to train for.')
+p.add_argument('--num_epochs_ours', type=int, default=15001)
+
 p.add_argument('--image_path', type=str, required=True,
                help='Path to the gt image.')
 
@@ -61,13 +64,22 @@ B = torch.load(save_path)
 
 summaries_dir = os.path.join(opt.logging_root, 'summary')
 summaries_dir_siren = os.path.join(opt.logging_root, 'summary', 'siren')
-summaries_dir_our = os.path.join(opt.logging_root, 'summary', 'our')
+summaries_dir_ours = os.path.join(opt.logging_root, 'summary', 'ours')
 
 writer_siren = SummaryWriter(summaries_dir_siren)
-writer_our = SummaryWriter(summaries_dir_our)
+writer_ours = SummaryWriter(summaries_dir_ours)
+
+steps_siren = [1000*i for i in range(opt.num_epochs_siren // 1000 + 1)]
+steps_ours = [1000*i for i in range(opt.num_epochs_ours // 1000 + 1)]
+
+sum_psnr_siren = [0 for i in range(opt.num_epochs_siren // 1000 + 1)]
+sum_psnr_ours = [0 for i in range(opt.num_epochs_ours // 1000 + 1)]
+
+counter = 0
 
 for png_file in jpg_files[:1000]:
-    # print(png_file)
+    counter += 1
+
     full_path = os.path.abspath(png_file)
     file_name = os.path.basename(png_file)
     print(f"Processing file: {full_path}")
@@ -86,9 +98,9 @@ for png_file in jpg_files[:1000]:
     ##### OUR
     if opt.model_type == 'sine' or opt.model_type == 'relu' or opt.model_type == 'tanh' or opt.model_type == 'selu' or opt.model_type == 'elu'\
             or opt.model_type == 'softplus':
-        model_our = modules.ImplicitMLP(B=B)
+        model_ours = modules.ImplicitMLP(B=B)
 
-        state_dict = model_our.state_dict()
+        state_dict = model_ours.state_dict()
         layers = []
         layer_names = []
         for l in state_dict:
@@ -102,7 +114,7 @@ for png_file in jpg_files[:1000]:
     #     model = modules.SingleBVPNet(type='relu', mode=opt.model_type, hidden_features=128, out_features=3, sidelength=image_resolution)
     # else:
     #     raise NotImplementedError
-    model_our.to(device)
+    model_ours.to(device)
 
 
     #### SIREN
@@ -116,7 +128,7 @@ for png_file in jpg_files[:1000]:
     model_siren = modules.SingleBVPNet(sidelength=image_resolution, out_features = 3)
     model_siren.to(device)
 
-    root_path_our = os.path.join(opt.logging_root, file_name, 'our')
+    root_path_ours = os.path.join(opt.logging_root, file_name, 'ours')
     root_path_siren = os.path.join(opt.logging_root, file_name, 'siren')
 
     #root_path = os.path.join(opt.logging_root, opt.experiment_name)
@@ -125,14 +137,30 @@ for png_file in jpg_files[:1000]:
     loss_fn = partial(loss_functions.image_mse, None)
     summary_fn = partial(utils.write_image_summary, image_resolution)
 
-    training.train(model=model_siren, train_dataloader=dataloader_siren, epochs=opt.num_epochs, lr=opt.lr,
+    psnr_siren = training.train(model=model_siren, train_dataloader=dataloader_siren, epochs=opt.num_epochs_siren, lr=opt.lr_siren,
                    steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
                    model_dir=root_path_siren, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
                    writer=writer_siren)
 
-    training.train(model=model_our, train_dataloader=dataloader, epochs=15001, lr=5e-4,
+    psnr_ours = training.train(model=model_ours, train_dataloader=dataloader, epochs=opt.num_epochs_ours, lr= opt.lr_ours,
                    steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
-                   model_dir=root_path_our, loss_fn=loss_fn, summary_fn=summary_fn, device = device, writer=writer_our)
+                   model_dir=root_path_ours, loss_fn=loss_fn, summary_fn=summary_fn, device = device, writer=writer_ours)
 
+    for i, psnr in enumerate(psnr_siren):
+        sum_psnr_siren[i] += psnr
+
+    for i, psnr in enumerate(psnr_ours):
+        sum_psnr_ours[i] += psnr
+
+mean_psnr_siren = [sum_psnr / counter for sum_psnr in sum_psnr_siren]
+mean_psnr_ours = [sum_psnr / counter for sum_psnr in sum_psnr_ours]
+
+for psnr, step in zip(mean_psnr_siren, steps_siren):
+    print(step, psnr)
+    writer_siren.add_scalar('psnr', psnr, step)
+
+for psnr, step in zip(mean_psnr_ours, steps_ours):
+    print(step, psnr)
+    writer_ours.add_scalar('psnr', psnr, step)
 
 
