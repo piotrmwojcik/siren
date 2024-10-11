@@ -75,11 +75,10 @@ steps_ours = [1000*i for i in range(opt.num_epochs_ours // 1000 + 1)]
 sum_psnr_siren = [0 for i in range(opt.num_epochs_siren // 1000 + 1)]
 sum_psnr_ours = [0 for i in range(opt.num_epochs_ours // 1000 + 1)]
 
-counter = 0
+results_siren = None
+results_ours = None
 
-for png_file in jpg_files[:1000]:
-    counter += 1
-
+for png_file in jpg_files[:2]:
     full_path = os.path.abspath(png_file)
     file_name = os.path.basename(png_file)
     print(f"Processing file: {full_path}")
@@ -146,21 +145,52 @@ for png_file in jpg_files[:1000]:
                    steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
                    model_dir=root_path_ours, loss_fn=loss_fn, summary_fn=summary_fn, device = device, writer=writer_ours)
 
-    for i, psnr in enumerate(psnr_siren):
-        sum_psnr_siren[i] += psnr
+    if results_siren is not None:
+        results_siren = np.vstack((results_siren, np.array(psnr_siren)))
+    else:
+        results_siren = np.array(psnr_siren)
 
-    for i, psnr in enumerate(psnr_ours):
-        sum_psnr_ours[i] += psnr
+    if results_ours is not None:
+        results_ours = np.vstack((results_ours, np.array(psnr_ours)))
+    else:
+        results_ours = np.array(psnr_ours)
 
-mean_psnr_siren = [sum_psnr / counter for sum_psnr in sum_psnr_siren]
-mean_psnr_ours = [sum_psnr / counter for sum_psnr in sum_psnr_ours]
 
-for psnr, step in zip(mean_psnr_siren, steps_siren):
-    print(step, psnr)
-    writer_siren.add_scalar('psnr', psnr, step)
+mean_psnr_siren = np.mean(results_siren, 0)
+mean_psnr_ours = np.mean(results_ours,0 )
+std_psnr_siren = np.std(results_siren,0)
+std_psnr_ours = np.std(results_ours, 0)
 
-for psnr, step in zip(mean_psnr_ours, steps_ours):
-    print(step, psnr)
-    writer_ours.add_scalar('psnr', psnr, step)
+# for psnr, step in zip(mean_psnr_siren, steps_siren):
+#     print(step, psnr)
+#     writer_siren.add_scalar('psnr', psnr, step)
+#
+# for psnr, step in zip(mean_psnr_ours, steps_ours):
+#     print(step, psnr)
+#     writer_ours.add_scalar('psnr', psnr, step)
 
+
+import matplotlib.pyplot as plt
+
+
+plt.plot(steps_siren, mean_psnr_siren, label='siren', color='orange', marker='o')
+
+plt.plot(steps_ours, mean_psnr_ours, label='ours', color='blue', marker='x')
+
+for i in range(len(steps_siren)):
+    plt.text(steps_siren[i], mean_psnr_siren[i], f"±{std_psnr_siren[i]:.2f}", color='blue', fontsize=9)
+
+# Annotate standard deviations for Ours
+for i in range(len(steps_ours)):
+    plt.text(steps_ours[i], mean_psnr_ours[i], f"±{std_psnr_ours[i]:.2f}", color='green', fontsize=9)
+
+plt.xlabel('Steps')
+plt.ylabel('PSNR')
+plt.title('PSNR vs Steps with Standard Deviations')
+plt.legend()
+
+plt.grid(True)
+
+# Save the plot as a PNG file
+plt.savefig('psnr_vs_steps_with_std_text.png', dpi=300)
 
