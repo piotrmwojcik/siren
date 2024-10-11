@@ -175,10 +175,10 @@ import matplotlib.pyplot as plt
 
 plt.plot(steps_siren, mean_psnr_siren, label='siren', color='orange', marker='o')
 
-plt.plot(steps_ours, mean_psnr_ours, label='ours', color='blue', marker='x')
+plt.plot(steps_ours, mean_psnr_ours, label='ours', color='blue', marker='o')
 
 for i in range(len(steps_siren)):
-    plt.text(steps_siren[i], mean_psnr_siren[i], f"±{std_psnr_siren[i]:.2f}", color='blue', fontsize=9)
+    plt.text(steps_siren[i], mean_psnr_siren[i], f"±{std_psnr_siren[i]:.2f}", color='purple', fontsize=9)
 
 # Annotate standard deviations for Ours
 for i in range(len(steps_ours)):
@@ -186,7 +186,7 @@ for i in range(len(steps_ours)):
 
 plt.xlabel('Steps')
 plt.ylabel('PSNR')
-plt.title('PSNR vs Steps with Standard Deviations')
+plt.title('PSNR with Standard Deviations')
 plt.legend()
 
 plt.grid(True)
