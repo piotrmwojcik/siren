@@ -78,7 +78,9 @@ sum_psnr_ours = [0 for i in range(opt.num_epochs_ours // 1000 + 1)]
 results_siren = None
 results_ours = None
 
-for png_file in jpg_files[:2]:
+counter = 0
+for png_file in jpg_files[:1000]:
+    counter += 1
     full_path = os.path.abspath(png_file)
     file_name = os.path.basename(png_file)
     print(f"Processing file: {full_path}")
@@ -186,7 +188,7 @@ for i in range(len(steps_ours)):
 
 plt.xlabel('Steps')
 plt.ylabel('PSNR')
-plt.title('PSNR with Standard Deviations')
+plt.title(f'PSNR with Standard Deviations for {counter} images')
 plt.legend()
 
 plt.grid(True)
