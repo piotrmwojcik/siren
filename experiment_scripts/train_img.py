@@ -52,7 +52,7 @@ p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained mo
 
 opt = p.parse_args()
 
-jpg_files = glob.glob(os.path.join('data/minidataset', "*.jpg"))
+jpg_files = glob.glob(os.path.join(opt.image_path, "*.jpg"))
 num_input_channels=2
 mapping_dim=128
 scale = 10
