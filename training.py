@@ -94,7 +94,7 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                 grad = torch.autograd.grad(train_loss,
                                            list(model.parameters()),
                                            create_graph=False)
-                for grad, param in zip(grad, mlp.parameters()):
+                for grad, param in zip(grad, model.parameters()):
                     param -= lr * grad
 
                 if not use_lbfgs:
