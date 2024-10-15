@@ -91,9 +91,15 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                                os.path.join(checkpoints_dir, 'model_current.pth'))
                     summary_fn(model, model_input, gt, model_output, writer, total_steps)
 
+                grad = torch.autograd.grad(train_loss,
+                                           list(model.parameters()),
+                                           create_graph=False)
+                for grad, param in zip(grad, mlp.parameters()):
+                    param -= lr * grad
+
                 if not use_lbfgs:
-                    optim.zero_grad()
-                    train_loss.backward()
+                    #optim.zero_grad()
+                    #train_loss.backward()
 
                     if clip_grad:
                         if isinstance(clip_grad, bool):
