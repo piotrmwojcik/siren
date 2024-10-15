@@ -91,24 +91,24 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                                os.path.join(checkpoints_dir, 'model_current.pth'))
                     summary_fn(model, model_input, gt, model_output, writer, total_steps)
 
-                grad = torch.autograd.grad(train_loss,
-                                           list(model.parameters()),
-                                           create_graph=False)
+                #grad = torch.autograd.grad(train_loss,
+                #                           list(model.parameters()),
+                #                           create_graph=False)
 
                 if not use_lbfgs:
-                    #optim.zero_grad()
-                    #train_loss.backward()
+                    optim.zero_grad()
+                    train_loss.backward()
 
                     if clip_grad:
                         if isinstance(clip_grad, bool):
                             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.)
                         else:
                             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=clip_grad)
-                    with torch.no_grad():
-                        for grad, param in zip(grad, model.parameters()):
-                            param -= lr * grad
+                    #with torch.no_grad():
+                    #    for grad, param in zip(grad, model.parameters()):
+                    #        param -= lr * grad
 
-                    #optim.step()
+                    optim.step()
 
                 pbar.update(1)
 
