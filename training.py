@@ -94,8 +94,6 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                 grad = torch.autograd.grad(train_loss,
                                            list(model.parameters()),
                                            create_graph=False)
-                for grad, param in zip(grad, model.parameters()):
-                    param -= lr * grad
 
                 if not use_lbfgs:
                     #optim.zero_grad()
@@ -106,6 +104,9 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.)
                         else:
                             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=clip_grad)
+
+                    for grad, param in zip(grad, model.parameters()):
+                        param -= lr * grad
 
                     #optim.step()
 
