@@ -118,7 +118,7 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                     #        param -= lr * grad
 
                     optim.step()
-                    print(optim.state_dict())
+                    print(optim.state_dict().keys())
 
                 pbar.update(1)
 
