@@ -17,6 +17,8 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
     optim = torch.optim.Adam(lr=lr, params=model.parameters())
     print('start')
     print(optim.state_dict())
+    print(len(code_optimizer[idx].param_groups))
+    print(code_optimizer[idx].param_groups[0])
 
     # copy settings from Raissi et al. (2019) and here 
     # https://github.com/maziarraissi/PINNs
