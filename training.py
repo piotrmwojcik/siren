@@ -101,6 +101,7 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                                                list(model.parameters()),
                                                create_graph=False)
                     for param, grad_s in zip(model.parameters(), grad):
+                        param.grad = torch.zeros_like(param)
                         param.grad.copy_(grad_s)
 
                     if clip_grad:
