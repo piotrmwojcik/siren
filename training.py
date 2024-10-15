@@ -104,9 +104,9 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.)
                         else:
                             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=clip_grad)
-
-                    for grad, param in zip(grad, model.parameters()):
-                        param -= lr * grad
+                    with torch.no_grad():
+                        for grad, param in zip(grad, model.parameters()):
+                            param -= lr * grad
 
                     #optim.step()
 
