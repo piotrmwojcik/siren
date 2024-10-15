@@ -91,13 +91,17 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                                os.path.join(checkpoints_dir, 'model_current.pth'))
                     summary_fn(model, model_input, gt, model_output, writer, total_steps)
 
-                #grad = torch.autograd.grad(train_loss,
-                #                           list(model.parameters()),
-                #                           create_graph=False)
+
 
                 if not use_lbfgs:
                     optim.zero_grad()
-                    train_loss.backward()
+                    #train_loss.backward()
+
+                    grad = torch.autograd.grad(train_loss,
+                                               list(model.parameters()),
+                                               create_graph=False)
+                    for param, grad_s in zip(model.parameters(), grad):
+                        param.grad.copy_(grad_s)
 
                     if clip_grad:
                         if isinstance(clip_grad, bool):
@@ -130,8 +134,8 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
 
                 total_steps += 1
 
-        torch.save(model.state_dict(),
-                   os.path.join(checkpoints_dir, 'model_final.pth'))
+        #torch.save(model.state_dict(),
+        #          os.path.join(checkpoints_dir, 'model_final.pth'))
         np.savetxt(os.path.join(checkpoints_dir, 'train_losses_final.txt'),
                    np.array(train_losses))
 
