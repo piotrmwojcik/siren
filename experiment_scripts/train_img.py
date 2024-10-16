@@ -10,15 +10,14 @@ from torch.utils.data import DataLoader, Dataset
 sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ) )
 import dataio, meta_modules, utils, training, loss_functions, modules
 # https://github.com/DavideBuffelli/SAME/issues/1
-
 from torch.utils.data import DataLoader
 import configargparse
 from functools import partial
 from torch.utils.tensorboard import SummaryWriter
-
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
 p = configargparse.ArgumentParser()
 p.add('-c', '--config_filepath', required=False, is_config_file=True, help='Path to config file.')
@@ -33,7 +32,7 @@ p.add_argument('--lr_siren', type=float, default=1e-4, help='learning rate. defa
 p.add_argument('--lr_ours', type=float, default=5e-4)
 p.add_argument('--num_epochs_siren', type=int, default=10001,
                help='Number of epochs to train for.')
-p.add_argument('--num_epochs_ours', type=int, default=15001)
+p.add_argument('--num_epochs_ours', type=int, default=6001)
 
 p.add_argument('--image_path', type=str, required=True,
                help='Path to the gt image.')
@@ -65,134 +64,74 @@ summaries_dir = os.path.join(opt.logging_root, opt.experiment_name, 'summary')
 summaries_dir_siren = os.path.join(opt.logging_root, opt.experiment_name, 'summary', 'siren')
 summaries_dir_ours = os.path.join(opt.logging_root, opt.experiment_name, 'summary', 'ours')
 
-writer_siren = SummaryWriter(summaries_dir_siren)
 writer_ours = SummaryWriter(summaries_dir_ours)
 
-steps_siren = [1000*i for i in range(opt.num_epochs_siren // 1000 + 1)]
 steps_ours = [1000*i for i in range(opt.num_epochs_ours // 1000 + 1)]
 
-sum_psnr_siren = [0 for i in range(opt.num_epochs_siren // 1000 + 1)]
-sum_psnr_ours = [0 for i in range(opt.num_epochs_ours // 1000 + 1)]
-
-results_siren = None
 results_ours = None
-
 counter = 0
+
+lrs = [0.0001, 0.001, 0.005, 0.01, 0.05, 0.1]
+results = {lr: None for lr in lrs}
+
 for png_file in jpg_files[:20]:
     counter += 1
     full_path = os.path.abspath(png_file)
     file_name = os.path.basename(png_file)
     print(f"Processing file: {full_path}")
 
-
     img_dataset = dataio.ImageFile(full_path)
     coord_dataset = dataio.Implicit2DWrapper(img_dataset, sidelength=64, compute_diff='none', grid='our')
     image_resolution = (64, 64)
-    #
     dataloader = DataLoader(coord_dataset, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)
 
 
-    #B = torch.randn((2, 128)) * 10
-
-    # Define the model.
-    ##### OUR
-    if opt.model_type == 'sine' or opt.model_type == 'relu' or opt.model_type == 'tanh' or opt.model_type == 'selu' or opt.model_type == 'elu'\
-            or opt.model_type == 'softplus':
+    for lr in lrs:
         model_ours = modules.ImplicitMLP(B=B)
+        model_ours.to(device)
 
-        state_dict = model_ours.state_dict()
-        layers = []
-        layer_names = []
-        for l in state_dict:
-            shape = state_dict[l].shape
-            layers.append(np.prod(shape))
-            layer_names.append(l)
-        # print(layers)
+        root_path_ours = os.path.join(opt.logging_root, opt.experiment_name, file_name, str(lr), 'ours')
+        root_path_siren = os.path.join(opt.logging_root, opt.experiment_name, file_name, str(lr), 'siren')
 
-        #model = modules.SingleBVPNet(type=opt.model_type, mode='mlp', hidden_features=128, out_features=3, sidelength=image_resolution)
-    # elif opt.model_type == 'rbf' or opt.model_type == 'nerf':
-    #     model = modules.SingleBVPNet(type='relu', mode=opt.model_type, hidden_features=128, out_features=3, sidelength=image_resolution)
-    # else:
-    #     raise NotImplementedError
-    model_ours.load_state_dict(torch.load('logs/002328.jpg/ours/checkpoints/model_final.pth', map_location=device))
-    model_ours.to(device)
+        loss_fn = partial(loss_functions.image_mse, None)
+        summary_fn = partial(utils.write_image_summary, image_resolution)
+
+        psnr_ours = training.train(model=model_ours, train_dataloader=dataloader, epochs=opt.num_epochs_ours, lr=lr,
+                       steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
+                       model_dir=root_path_ours, loss_fn=loss_fn, summary_fn=summary_fn, device = device, writer=writer_ours)
 
 
-    #### SIREN
-
-    img_dataset_siren = dataio.ImageFile(full_path)
-    coord_dataset_siren = dataio.Implicit2DWrapper(img_dataset_siren, sidelength=64, compute_diff='none', grid='siren')
-    image_resolution = (64, 64)
-
-    dataloader_siren = DataLoader(coord_dataset_siren, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)
-
-    model_siren = modules.SingleBVPNet(sidelength=image_resolution, out_features = 3)
-    model_siren.to(device)
-
-    root_path_ours = os.path.join(opt.logging_root, opt.experiment_name, file_name, 'ours')
-    root_path_siren = os.path.join(opt.logging_root, opt.experiment_name, file_name, 'siren')
-
-    #root_path = os.path.join(opt.logging_root, opt.experiment_name)
-
-    # Define the loss
-    loss_fn = partial(loss_functions.image_mse, None)
-    summary_fn = partial(utils.write_image_summary, image_resolution)
-
-    psnr_siren = training.train(model=model_siren, train_dataloader=dataloader_siren, epochs=opt.num_epochs_siren, lr=opt.lr_siren,
-                   steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
-                   model_dir=root_path_siren, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
-                   writer=writer_siren)
-
-    psnr_ours = training.train(model=model_ours, train_dataloader=dataloader, epochs=opt.num_epochs_ours, lr= opt.lr_ours,
-                   steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
-                   model_dir=root_path_ours, loss_fn=loss_fn, summary_fn=summary_fn, device = device, writer=writer_ours)
-
-    if results_siren is not None:
-        results_siren = np.vstack((results_siren, np.array(psnr_siren)))
-    else:
-        results_siren = np.array(psnr_siren)
-
-    if results_ours is not None:
-        results_ours = np.vstack((results_ours, np.array(psnr_ours)))
-    else:
-        results_ours = np.array(psnr_ours)
+        if results[lr] is not None:
+            results[lr] = np.vstack((results[lr], np.array(psnr_ours)))
+        else:
+            results[lr] = np.array(psnr_ours)
+        print("AAAAA ", results)
 
 
-mean_psnr_siren = np.mean(results_siren, 0)
-mean_psnr_ours = np.mean(results_ours,0 )
-std_psnr_siren = np.std(results_siren,0)
-std_psnr_ours = np.std(results_ours, 0)
 
-# for psnr, step in zip(mean_psnr_siren, steps_siren):
-#     print(step, psnr)
-#     writer_siren.add_scalar('psnr', psnr, step)
-#
-# for psnr, step in zip(mean_psnr_ours, steps_ours):
-#     print(step, psnr)
-#     writer_ours.add_scalar('psnr', psnr, step)
+colors = cm.viridis(np.linspace(0, 1, len(lrs)))
+
+for i, lr in enumerate(lrs):
+    mean_psnr = np.mean(results[lr], 0)
+    std_psnr = np.std(results[lr], 0)
+
+    print("results", results[lr].shape)
+    print("mean", mean_psnr.shape)
+    print("std", std_psnr.shape)
+    print("steps", steps_ours)
+
+    plt.plot(steps_ours, mean_psnr, label=f"LR: {lr}", color=colors[i], marker='o')
+
+    for i in range(len(steps_ours)):
+        plt.text(steps_ours[i], mean_psnr[i], f"±{std_psnr[i]:.2f}", color=colors[i], fontsize=9)
 
 
-import matplotlib.pyplot as plt
 
-
-plt.plot(steps_siren, mean_psnr_siren, label='siren', color='orange', marker='o')
-
-plt.plot(steps_ours, mean_psnr_ours, label='ours', color='blue', marker='o')
-
-for i in range(len(steps_siren)):
-    plt.text(steps_siren[i], mean_psnr_siren[i], f"±{std_psnr_siren[i]:.2f}", color='purple', fontsize=9)
-
-# Annotate standard deviations for Ours
-for i in range(len(steps_ours)):
-    plt.text(steps_ours[i], mean_psnr_ours[i], f"±{std_psnr_ours[i]:.2f}", color='green', fontsize=9)
-
-plt.xlabel('Steps')
-plt.ylabel('PSNR')
-plt.title(f'PSNR with Standard Deviations for {counter} images')
+plt.title(f"PSNR with Standard Deviations with Different Learning Rates for {counter} images")
+plt.xlabel("Steps")
+plt.ylabel("PSNR")
 plt.legend()
 
 plt.grid(True)
-
-# Save the plot as a PNG file
-plt.savefig('psnr_vs_steps_with_std_text.png', dpi=300)
+plt.savefig('psnr_lr.png', dpi=300)
 
