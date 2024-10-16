@@ -61,10 +61,9 @@ save_path = 'data/minidataset/B.pth'
 # torch.save(B, save_path)
 B = torch.load(save_path)
 
-
-summaries_dir = os.path.join(opt.logging_root, 'summary')
-summaries_dir_siren = os.path.join(opt.logging_root, 'summary', 'siren')
-summaries_dir_ours = os.path.join(opt.logging_root, 'summary', 'ours')
+summaries_dir = os.path.join(opt.logging_root, opt.experiment_name, 'summary')
+summaries_dir_siren = os.path.join(opt.logging_root, opt.experiment_name, 'summary', 'siren')
+summaries_dir_ours = os.path.join(opt.logging_root, opt.experiment_name, 'summary', 'ours')
 
 writer_siren = SummaryWriter(summaries_dir_siren)
 writer_ours = SummaryWriter(summaries_dir_ours)
@@ -79,7 +78,7 @@ results_siren = None
 results_ours = None
 
 counter = 0
-for png_file in jpg_files[:1000]:
+for png_file in jpg_files[:20]:
     counter += 1
     full_path = os.path.abspath(png_file)
     file_name = os.path.basename(png_file)
@@ -115,6 +114,7 @@ for png_file in jpg_files[:1000]:
     #     model = modules.SingleBVPNet(type='relu', mode=opt.model_type, hidden_features=128, out_features=3, sidelength=image_resolution)
     # else:
     #     raise NotImplementedError
+    model_ours.load_state_dict(torch.load('logs/002328.jpg/ours/checkpoints/model_final.pth', map_location=device))
     model_ours.to(device)
 
 
@@ -129,8 +129,8 @@ for png_file in jpg_files[:1000]:
     model_siren = modules.SingleBVPNet(sidelength=image_resolution, out_features = 3)
     model_siren.to(device)
 
-    root_path_ours = os.path.join(opt.logging_root, file_name, 'ours')
-    root_path_siren = os.path.join(opt.logging_root, file_name, 'siren')
+    root_path_ours = os.path.join(opt.logging_root, opt.experiment_name, file_name, 'ours')
+    root_path_siren = os.path.join(opt.logging_root, opt.experiment_name, file_name, 'siren')
 
     #root_path = os.path.join(opt.logging_root, opt.experiment_name)
 
