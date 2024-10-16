@@ -122,8 +122,8 @@ for i, lr in enumerate(lrs):
 
     plt.plot(steps_ours, mean_psnr, label=f"LR: {lr}", color=colors[i], marker='o')
 
-    for i in range(len(steps_ours)):
-        plt.text(steps_ours[i], mean_psnr[i], f"±{std_psnr[i]:.2f}", color=colors[i], fontsize=9)
+    for j in range(len(steps_ours)):
+        plt.text(steps_ours[j], mean_psnr[j], f"±{std_psnr[j]:.2f}", color=colors[i], fontsize=9)
 
 
 
