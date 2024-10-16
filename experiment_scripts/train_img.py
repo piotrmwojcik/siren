@@ -32,14 +32,14 @@ p.add_argument('--lr_siren', type=float, default=1e-4, help='learning rate. defa
 p.add_argument('--lr_ours', type=float, default=5e-4)
 p.add_argument('--num_epochs_siren', type=int, default=10001,
                help='Number of epochs to train for.')
-p.add_argument('--num_epochs_ours', type=int, default=6001)
+p.add_argument('--num_epochs_ours', type=int, default=4001)
 
 p.add_argument('--image_path', type=str, required=True,
                help='Path to the gt image.')
 
-p.add_argument('--epochs_til_ckpt', type=int, default=1000,
+p.add_argument('--epochs_til_ckpt', type=int, default=500,
                help='Time interval in seconds until checkpoint is saved.')
-p.add_argument('--steps_til_summary', type=int, default=1000,
+p.add_argument('--steps_til_summary', type=int, default=500,
                help='Time interval in seconds until tensorboard summary is saved.')
 
 p.add_argument('--model_type', type=str, default='sine',
@@ -66,15 +66,15 @@ summaries_dir_ours = os.path.join(opt.logging_root, opt.experiment_name, 'summar
 
 writer_ours = SummaryWriter(summaries_dir_ours)
 
-steps_ours = [1000*i for i in range(opt.num_epochs_ours // 1000 + 1)]
+steps_ours = [500*i for i in range(opt.num_epochs_ours // 500 + 1)]
 
 results_ours = None
 counter = 0
 
-lrs = [0.0001, 0.001, 0.005, 0.01, 0.05, 0.1]
+lrs = [0.001, 0.003, 0.005, 0.007, 0.009, 0.01]
 results = {lr: None for lr in lrs}
 
-for png_file in jpg_files[:20]:
+for png_file in jpg_files[:30]:
     counter += 1
     full_path = os.path.abspath(png_file)
     file_name = os.path.basename(png_file)
@@ -114,11 +114,6 @@ colors = cm.viridis(np.linspace(0, 1, len(lrs)))
 for i, lr in enumerate(lrs):
     mean_psnr = np.mean(results[lr], 0)
     std_psnr = np.std(results[lr], 0)
-
-    print("results", results[lr].shape)
-    print("mean", mean_psnr.shape)
-    print("std", std_psnr.shape)
-    print("steps", steps_ours)
 
     plt.plot(steps_ours, mean_psnr, label=f"LR: {lr}", color=colors[i], marker='o')
 
