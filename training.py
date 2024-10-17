@@ -100,13 +100,15 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                 if not use_lbfgs:
                     optim.zero_grad()
                     #train_loss.backward()
-
+                    start = time.time()
                     grad = torch.autograd.grad(train_loss,
                                                list(model.parameters()),
                                                create_graph=False)
                     for param, grad_s in zip(model.parameters(), grad):
                         param.grad = torch.zeros_like(param)
                         param.grad.copy_(grad_s)
+                    end = time.time()
+                    print(f"autograd took {round(end - start, 2)} seconds")
 
                     if clip_grad:
                         if isinstance(clip_grad, bool):
