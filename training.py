@@ -72,7 +72,7 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                         train_loss.backward()
                         return train_loss
                     optim.step(closure)
-
+                start = time.time()
                 model_output = model(model_input)
                 losses = loss_fn(model_output, gt)
 
@@ -80,23 +80,23 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                 for loss_name, loss in losses.items():
                     single_loss = loss.mean()
 
-                    if loss_schedules is not None and loss_name in loss_schedules:
-                        writer.add_scalar(loss_name + "_weight", loss_schedules[loss_name](total_steps), total_steps)
-                        single_loss *= loss_schedules[loss_name](total_steps)
-
-                    writer.add_scalar(loss_name, single_loss, total_steps)
+                    # if loss_schedules is not None and loss_name in loss_schedules:
+                    #     writer.add_scalar(loss_name + "_weight", loss_schedules[loss_name](total_steps), total_steps)
+                    #     single_loss *= loss_schedules[loss_name](total_steps)
+                    #
+                    # writer.add_scalar(loss_name, single_loss, total_steps)
                     train_loss += single_loss
 
                 train_losses.append(train_loss.item())
-                writer.add_scalar("total_train_loss", train_loss, total_steps)
+                #writer.add_scalar("total_train_loss", train_loss, total_steps)
 
-                if not total_steps % steps_til_summary:
-                    torch.save(model.state_dict(),
-                               os.path.join(checkpoints_dir, 'model_current.pth'))
-                    summary_fn(model, model_input, gt, model_output, writer, total_steps)
+                #if not total_steps % steps_til_summary:
+                #    torch.save(model.state_dict(),
+                #               os.path.join(checkpoints_dir, 'model_current.pth'))
+                #    summary_fn(model, model_input, gt, model_output, writer, total_steps)
 
 
-                start = time.time()
+
                 if not use_lbfgs:
                     optim.zero_grad()
                     #train_loss.backward()
