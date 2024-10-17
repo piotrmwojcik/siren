@@ -118,8 +118,10 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                     #with torch.no_grad():
                     #    for grad, param in zip(grad, model.parameters()):
                     #        param -= lr * grad
-
+                    start = time.time()
                     optim.step()
+                    end = time.time()
+                    print(f"optim step took {round(end - start, 2)} seconds")
                     #print(optim.state_dict().keys())
 
                 pbar.update(1)
