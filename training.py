@@ -96,18 +96,16 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                     summary_fn(model, model_input, gt, model_output, writer, total_steps)
 
 
-
+                start = time.time()
                 if not use_lbfgs:
                     optim.zero_grad()
                     #train_loss.backward()
-                    start = time.time()
                     grad = torch.autograd.grad(train_loss,
                                                list(model.parameters()),
                                                create_graph=False)
                     for param, grad_s in zip(model.parameters(), grad):
                         param.grad = torch.zeros_like(param)
                         param.grad.copy_(grad_s)
-                    end = time.time()
                     print(f"autograd took {round(end - start, 2)} seconds")
 
                     if clip_grad:
@@ -118,10 +116,9 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                     #with torch.no_grad():
                     #    for grad, param in zip(grad, model.parameters()):
                     #        param -= lr * grad
-                    start = time.time()
                     optim.step()
                     end = time.time()
-                    print(f"optim step took {round(end - start, 2)} seconds")
+                    print(f"one step took {round(end - start, 3)} seconds")
                     #print(optim.state_dict().keys())
 
                 pbar.update(1)
