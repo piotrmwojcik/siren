@@ -106,7 +106,6 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                     for param, grad_s in zip(model.parameters(), grad):
                         param.grad = torch.zeros_like(param)
                         param.grad.copy_(grad_s)
-                    print(f"autograd took {round(end - start, 2)} seconds")
 
                     if clip_grad:
                         if isinstance(clip_grad, bool):
