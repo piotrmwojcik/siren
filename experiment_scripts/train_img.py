@@ -31,7 +31,7 @@ p.add_argument('--num_epochs', type=int, default=15000,
 #p.add_argument('--image_path', type=str, required=True,
 #               help='Path to the gt image.')
 
-p.add_argument('--epochs_til_ckpt', type=int, default=2000,
+p.add_argument('--epochs_til_ckpt', type=int, default=500,
                help='Time interval in seconds until checkpoint is saved.')
 p.add_argument('--steps_til_summary', type=int, default=10,
                help='Time interval in seconds until tensorboard summary is saved.')
