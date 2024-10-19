@@ -72,7 +72,6 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                         train_loss.backward()
                         return train_loss
                     optim.step(closure)
-                start = time.time()
                 model_output = model(model_input)
                 losses = loss_fn(model_output, gt)
 
@@ -116,8 +115,6 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                     #    for grad, param in zip(grad, model.parameters()):
                     #        param -= lr * grad
                     optim.step()
-                    end = time.time()
-                    print(f"one step took {round(end - start, 3)} seconds")
                     #print(optim.state_dict().keys())
 
                 pbar.update(1)
