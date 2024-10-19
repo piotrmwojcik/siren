@@ -18,13 +18,14 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
 
     optim = torch.optim.Adam(lr=lr, params=model.parameters())
 
-    # copy settings from Raissi et al. (2019) and here 
+    # copy settings from Raissi et al. (2019) and here
     # https://github.com/maziarraissi/PINNs
     if use_lbfgs:
         optim = torch.optim.LBFGS(lr=lr, params=model.parameters(), max_iter=50000, max_eval=50000,
                                   history_size=50, line_search_fn='strong_wolfe')
 
-    model_name= model_dir.split('/')[-2]
+    name = model_dir.split('/')
+    model_name = name[-3] + "_" + name[-2] + "_" + name[-1]
 
     if os.path.exists(model_dir):
         val = input("The model directory %s exists. Overwrite? (y/n)"%model_dir)
@@ -53,7 +54,7 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
 
             for step, (model_input, gt) in enumerate(train_dataloader):
                 start_time = time.time()
-            
+
                 model_input = {key: value.to(device) for key, value in model_input.items()}
                 gt = {key: value.to(device) for key, value in gt.items()}
 
@@ -68,7 +69,7 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                         losses = loss_fn(model_output, gt)
                         train_loss = 0.
                         for loss_name, loss in losses.items():
-                            train_loss += loss.mean() 
+                            train_loss += loss.mean()
                         train_loss.backward()
                         return train_loss
                     optim.step(closure)
@@ -91,9 +92,9 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                 # writer.add_scalar("total_train_loss", train_loss, total_steps)
 
                 if not total_steps % steps_til_summary:
-                    torch.save(model.state_dict(),
-                               os.path.join(checkpoints_dir, 'model_current.pth'))
+                    summary_fn(model, model_input, gt, model_output, writer, total_steps, prefix = model_name)
                     psnrs.append(utils.calculate_psnr((64,64), model_output, gt))
+
 
                 if not use_lbfgs:
                     optim.zero_grad()
@@ -142,3 +143,6 @@ class LinearDecaySchedule():
 
     def __call__(self, iter):
         return self.start_val + (self.final_val - self.start_val) * min(iter / self.num_steps, 1.)
+
+
+

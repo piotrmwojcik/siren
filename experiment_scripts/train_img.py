@@ -32,7 +32,7 @@ p.add_argument('--lr_siren', type=float, default=1e-4, help='learning rate. defa
 p.add_argument('--lr_ours', type=float, default=5e-4)
 p.add_argument('--num_epochs_siren', type=int, default=10001,
                help='Number of epochs to train for.')
-p.add_argument('--num_epochs_ours', type=int, default=4001)
+p.add_argument('--num_epochs_ours', type=int, default=5001)
 
 p.add_argument('--image_path', type=str, required=True,
                help='Path to the gt image.')
@@ -71,7 +71,7 @@ steps_ours = [500*i for i in range(opt.num_epochs_ours // 500 + 1)]
 results_ours = None
 counter = 0
 
-lrs = [0.001, 0.003, 0.005, 0.007, 0.009, 0.01]
+lrs = [0.0001, 0.0003, 0.0005, 0.0007, 0.0009, 0.001]
 results = {lr: None for lr in lrs}
 
 for png_file in jpg_files[:30]:
@@ -90,11 +90,11 @@ for png_file in jpg_files[:30]:
         model_ours = modules.ImplicitMLP(B=B)
         model_ours.to(device)
 
-        root_path_ours = os.path.join(opt.logging_root, opt.experiment_name, file_name, str(lr), 'ours')
-        root_path_siren = os.path.join(opt.logging_root, opt.experiment_name, file_name, str(lr), 'siren')
+        root_path_ours = os.path.join(opt.logging_root, opt.experiment_name, file_name, 'ours', str(lr))
+        root_path_siren = os.path.join(opt.logging_root, opt.experiment_name, file_name, 'siren')
 
         loss_fn = partial(loss_functions.image_mse, None)
-        summary_fn = partial(utils.write_image_summary, image_resolution)
+        summary_fn = partial(utils.write_image_summary_empty, image_resolution)
 
         psnr_ours = training.train(model=model_ours, train_dataloader=dataloader, epochs=opt.num_epochs_ours, lr=lr,
                        steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
@@ -105,9 +105,6 @@ for png_file in jpg_files[:30]:
             results[lr] = np.vstack((results[lr], np.array(psnr_ours)))
         else:
             results[lr] = np.array(psnr_ours)
-        print("AAAAA ", results)
-
-
 
 colors = cm.viridis(np.linspace(0, 1, len(lrs)))
 
