@@ -71,7 +71,7 @@ steps_ours = [500*i for i in range(opt.num_epochs_ours // 500 + 1)]
 results_ours = None
 counter = 0
 
-lrs = [0.0001, 0.0003, 0.0005, 0.0007, 0.0009, 0.001]
+lrs = [0.001, 0.003, 0.005, 0.007, 0.009, 0.01]
 results = {lr: None for lr in lrs}
 
 for png_file in jpg_files[:30]:
@@ -88,7 +88,9 @@ for png_file in jpg_files[:30]:
 
     for lr in lrs:
         model_ours = modules.ImplicitMLP(B=B)
+        model_ours.load_state_dict(torch.load('logs/112842.jpg/ours/checkpoints/model_final.pth', map_location=device))
         model_ours.to(device)
+
 
         root_path_ours = os.path.join(opt.logging_root, opt.experiment_name, file_name, 'ours', str(lr))
         root_path_siren = os.path.join(opt.logging_root, opt.experiment_name, file_name, 'siren')
