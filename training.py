@@ -9,20 +9,37 @@ import time
 import numpy as np
 import os
 import shutil
+from torch.optim.lr_scheduler import LambdaLR
 
 
-def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_checkpoint, model_dir, loss_fn,
-          summary_fn, device, writer, val_dataloader=None, double_precision=False, clip_grad=False, use_lbfgs=False, loss_schedules=None):
+def custom_lr_scheduler(optimizer, lr_init, lr_finish, warmup_iterations, total_iterations, starting_iter): # 5000, 15000, 0
+    def lr_lambda(iteration):
+        iteration += starting_iter
+        if iteration < warmup_iterations:
+            return lr_init
+        else:
+            return lr_finish
+
+    return LambdaLR(optimizer, lr_lambda)
+
+def train(model, train_dataloader, epochs, lr_init, steps_til_summary, epochs_til_checkpoint, model_dir, loss_fn,
+          summary_fn, device, writer, lr_finish=0, val_dataloader=None, double_precision=False, clip_grad=False, use_lbfgs=False, loss_schedules=None):
 
     psnrs = []
 
-    optim = torch.optim.Adam(lr=lr, params=model.parameters())
 
     # copy settings from Raissi et al. (2019) and here 
     # https://github.com/maziarraissi/PINNs
-    if use_lbfgs:
-        optim = torch.optim.LBFGS(lr=lr, params=model.parameters(), max_iter=50000, max_eval=50000,
-                                  history_size=50, line_search_fn='strong_wolfe')
+    # if use_lbfgs:
+    #     optim = torch.optim.LBFGS(lr=lr, params=model.parameters(), max_iter=50000, max_eval=50000,
+    #                               history_size=50, line_search_fn='strong_wolfe')
+
+    if lr_finish != 0:
+        optim = torch.optim.Adam(lr=1, params=model.parameters())
+        scheduler = custom_lr_scheduler(optim, lr_init=lr_init, lr_finish=lr_finish, warmup_iterations=3000,
+                                        total_iterations=epochs, starting_iter=0)
+    else:
+        optim = torch.optim.Adam(lr=lr_init, params=model.parameters())
 
     model_name= model_dir.split('/')[-2]
 
@@ -106,6 +123,8 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=clip_grad)
 
                     optim.step()
+                    if lr_finish != 0:
+                        scheduler.step()
 
                 pbar.update(1)
 
