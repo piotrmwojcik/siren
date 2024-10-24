@@ -33,9 +33,6 @@ class VoxelObject(Dataset):
         return in_dict, gt_dict
 
 
-root_path = 'C:\\Personal\\HyperDiffusion\\data'
-shapenet = dataio.ShapeNetVoxel(dataset_root=root_path)
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 p = configargparse.ArgumentParser()
@@ -67,6 +64,7 @@ p.add_argument('--model_type', type=str, default='sine',
                     'and in the future: "mixed" (first layer sine, other layers tanh)')
 
 p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained model.')
+p.add_argument('--shapenet_path', type=str, default=None, required=True, help='Checkpoint to trained model.')
 
 opt = p.parse_args()
 
@@ -77,6 +75,7 @@ B = torch.randn((num_input_channels, mapping_dim)) * scale
 # save_path = 'data/minidataset/B.pth'
 # torch.save(B, save_path)
 # B = torch.load(save_path)
+shapenet = dataio.ShapeNetVoxel(dataset_root=opt.shapenet_path)
 
 summaries_dir = os.path.join(opt.logging_root, opt.experiment_name, 'summary')
 summaries_dir_siren = os.path.join(opt.logging_root, opt.experiment_name, 'summary', 'siren')
