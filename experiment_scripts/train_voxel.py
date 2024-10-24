@@ -33,7 +33,7 @@ class VoxelObject(Dataset):
         return in_dict, gt_dict
 
 
-root_path = 'C:\\Personal\\HyperDiffusion\\data'
+root_path = ''
 shapenet = dataio.ShapeNetVoxel(dataset_root=root_path)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
