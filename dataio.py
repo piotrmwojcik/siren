@@ -2,6 +2,7 @@ import csv
 import glob
 import math
 import os
+import random
 
 import matplotlib.colors as colors
 import numpy as np
@@ -67,8 +68,8 @@ def lin2img(tensor, image_resolution=None):
         height = image_resolution[0]
         width = image_resolution[1]
 
-
     return tensor.permute(0, 2, 1).view(batch_size, channels, height, width)
+
 
 def grads2img(gradients):
     mG = gradients.detach().squeeze(0).permute(-2, -1, -3).cpu()
@@ -908,6 +909,53 @@ class CompositeGradients(Dataset):
                    'gradients': self.comp_grads}
 
         return in_dict, gt_dict
+
+
+class ShapeNet(Dataset):
+    def __init__(self, split='train', sampling=None, dataset_root='datasets', simple_output=False, random_scale=False):
+        self.dataset_root = dataset_root
+        self.sampling = sampling
+        self.init_model_bool = False
+        self.split = split
+        self.simple_output = simple_output
+        self.random_scale = random_scale
+        self.init_model()
+        self.data_type = 'voxel'
+
+    def __len__(self):
+        if self.split == "train":
+            return 20 # 35019
+        else:
+            return 8762
+
+    def init_model(self):
+        split = self.split
+        points_path = os.path.join(self.dataset_root, 'shapenet', 'all_vox256_img', 'data_points_int_' + split + '.pth')
+        values_path = os.path.join(self.dataset_root, 'shapenet', 'all_vox256_img', 'data_values_' + split + '.pth')
+
+        self.data_points_int = torch.load(points_path).byte()
+        self.data_values = torch.load(values_path).byte()
+
+    def __getitem__(self, idx):
+        points = (self.data_points_int[idx].float() + 1) / 128 - 1
+        occs = self.data_values[idx].float() * 2 - 1
+
+        if self.sampling is not None:
+            idcs = np.random.randint(0, len(points), size=self.sampling)
+            points = points[idcs]
+            occs = occs[idcs]
+
+        if self.random_scale:
+            points = random.uniform(0.75, 1.25) * points
+
+        if self.simple_output:
+            return occs
+
+        else:
+            in_dict = {'idx': idx, 'coords': points}
+            gt_dict = {'img': occs}
+
+            return in_dict, gt_dict
 
 
 class ShapeNetVoxel(Dataset):

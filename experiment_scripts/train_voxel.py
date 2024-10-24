@@ -75,7 +75,7 @@ B = torch.randn((num_input_channels, mapping_dim)) * scale
 # save_path = 'data/minidataset/B.pth'
 # torch.save(B, save_path)
 # B = torch.load(save_path)
-shapenet = dataio.ShapeNetVoxel(dataset_root=opt.shapenet_path)
+shapenet = dataio.ShapeNet(dataset_root=opt.shapenet_path)
 
 summaries_dir = os.path.join(opt.logging_root, opt.experiment_name, 'summary')
 summaries_dir_siren = os.path.join(opt.logging_root, opt.experiment_name, 'summary', 'siren')
@@ -99,7 +99,7 @@ for sample_idx, sample in enumerate(shapenet):
     in_dict, gt_dict = sample
     img = gt_dict['img']
 
-    x = VoxelObject(in_dict['idx'], in_dict['coords'], img.view(64, 64, 64))
+    x = VoxelObject(in_dict['idx'], in_dict['coords'], img)
 
     print(f"Processing object: {sample_idx}")
     image_resolution = (64, 64, 64)
@@ -131,20 +131,21 @@ for sample_idx, sample in enumerate(shapenet):
     loss_fn = partial(loss_functions.image_mse, None)
     summary_fn = partial(utils.write_image_summary, image_resolution)
 
-    psnr_siren = training.train(model=model_siren, train_dataloader=dataloader_siren, epochs=opt.num_epochs_siren,
-                                lr=opt.lr_siren,
-                                steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
-                                model_dir=root_path_siren, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
-                                writer=writer_siren)
+    # to działa:
+    # psnr_siren = training.train(model=model_siren, train_dataloader=dataloader_siren, epochs=opt.num_epochs_siren,
+    #                             lr=opt.lr_siren,
+    #                             steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
+    #                             model_dir=root_path_siren, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
+    #                             writer=writer_siren)
     psnr_ours = training.train(model=model_ours, train_dataloader=dataloader_ours, epochs=opt.num_epochs_ours,
                                lr=opt.lr_ours,
                                steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
                                model_dir=root_path_ours, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
                                writer=writer_ours)
-    if results_siren is not None:
-        results_siren = np.vstack((results_siren, np.array(psnr_siren)))
-    else:
-        results_siren = np.array(psnr_siren)
+    # if results_siren is not None:
+    #     results_siren = np.vstack((results_siren, np.array(psnr_siren)))
+    # else:
+    #     results_siren = np.array(psnr_siren)
 
     if results_ours is not None:
         results_ours = np.vstack((results_ours, np.array(psnr_ours)))
