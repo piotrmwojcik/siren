@@ -75,6 +75,9 @@ B = torch.randn((num_input_channels, mapping_dim)) * scale
 # save_path = 'data/minidataset/B.pth'
 # torch.save(B, save_path)
 # B = torch.load(save_path)
+
+print(get_grid(4, 4, b=0))
+
 shapenet = dataio.ShapeNet(dataset_root=opt.shapenet_path)
 
 summaries_dir = os.path.join(opt.logging_root, opt.experiment_name, 'summary')
