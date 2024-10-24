@@ -610,8 +610,11 @@ def write_psnr(pred_img, gt_img, writer, iter, prefix):
 
 def calculate_psnr(image_resolution, model_output, gt):
 
-    pred_img = dataio.lin2img(model_output['model_out'], image_resolution)
-    gt_img = dataio.lin2img(gt['img'], image_resolution)
+    # pred_img = dataio.lin2img(model_output['model_out'], image_resolution)
+    # gt_img = dataio.lin2img(gt['img'], image_resolution)
+
+    pred_img = model_output['model_out'].view(1, 64, 64, 64)
+    gt_img = gt['img']
 
     batch_size = pred_img.shape[0]
 
@@ -620,8 +623,8 @@ def calculate_psnr(image_resolution, model_output, gt):
 
     psnrs, ssims = list(), list()
     for i in range(batch_size):
-        p = pred_img[i].transpose(1, 2, 0)
-        trgt = gt_img[i].transpose(1, 2, 0)
+        p = pred_img
+        trgt = gt_img
 
         p = (p / 2.) + 0.5
         p = np.clip(p, a_min=0., a_max=1.)

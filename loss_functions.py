@@ -6,18 +6,17 @@ import modules
 
 
 def image_mse(mask, model_output, gt):
-
     if mask is None:
-        return {'img_loss': ((model_output['model_out'] - gt['img']) ** 2).mean()}
+        return {'img_loss': ((model_output['model_out'].view(64, 64, 64) - gt['img']) ** 2).mean()}
     else:
-        return {'img_loss': (mask * (model_output['model_out'] - gt['img']) ** 2).mean()}
+        return {'img_loss': (mask * (model_output['model_out'].view(64, 64, 64) - gt['img']) ** 2).mean()}
 
 
 def image_l1(mask, model_output, gt):
     if mask is None:
-        return {'img_loss': torch.abs(model_output['model_out'] - gt['img']).mean()}
+        return {'img_loss': torch.abs(model_output['model_out'].view(64, 64, 64) - gt['img']).mean()}
     else:
-        return {'img_loss': (mask * torch.abs(model_output['model_out'] - gt['img'])).mean()}
+        return {'img_loss': (mask * torch.abs(model_output['model_out'].view(64, 64, 64) - gt['img'])).mean()}
 
 
 def image_mse_TV_prior(mask, k1, model, model_output, gt):

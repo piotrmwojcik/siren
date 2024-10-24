@@ -6,8 +6,9 @@ import glob
 import torch
 from torchvision import transforms
 from PIL import Image
-from torch.utils.data import DataLoader, Dataset
-sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ) )
+from torch.utils.data import DataLoader, Dataset, TensorDataset
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import dataio, meta_modules, utils, training, loss_functions, modules
 # https://github.com/DavideBuffelli/SAME/issues/1
 
@@ -17,26 +18,43 @@ from functools import partial
 from torch.utils.tensorboard import SummaryWriter
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+class VoxelObject(Dataset):
+    def __init__(self, idx, coords, img):
+        self.idx = idx
+        self.coords = coords
+        self.img = img
 
+    def __len__(self):
+        return 1
+
+    def __getitem__(self, idx):
+        in_dict = {'idx': idx, 'coords': self.coords}
+        gt_dict = {'img': self.img}
+        return in_dict, gt_dict
+
+
+root_path = 'C:\\Personal\\HyperDiffusion\\data'
+shapenet = dataio.ShapeNetVoxel(dataset_root=root_path)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 p = configargparse.ArgumentParser()
 p.add('-c', '--config_filepath', required=False, is_config_file=True, help='Path to config file.')
 
 p.add_argument('--logging_root', type=str, default='./logs', help='root for logging')
-p.add_argument('--experiment_name', type=str, default="test",
+p.add_argument('--experiment_name', type=str, default='3d_voxel',
                help='Name of subdirectory in logging_root where summaries and checkpoints will be saved.')
 
 # General training options
-p.add_argument('--batch_size', type=int, default=1)
+p.add_argument('--batch_size', type=int, default=32)
 p.add_argument('--lr_siren', type=float, default=1e-4, help='learning rate. default=1e-4')
 p.add_argument('--lr_ours', type=float, default=5e-4)
 p.add_argument('--num_epochs_siren', type=int, default=10001,
                help='Number of epochs to train for.')
 p.add_argument('--num_epochs_ours', type=int, default=15001)
 
-p.add_argument('--image_path', type=str, default='../data/minidataset',
-               help='Path to the gt image.')
+# p.add_argument('--image_path', type=str, required=True,
+#                help='Path to the gt image.')
 
 p.add_argument('--epochs_til_ckpt', type=int, default=1000,
                help='Time interval in seconds until checkpoint is saved.')
@@ -52,14 +70,13 @@ p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained mo
 
 opt = p.parse_args()
 
-jpg_files = glob.glob(os.path.join(opt.image_path, "*.jpg"))
-num_input_channels=2
-mapping_dim=128
+num_input_channels = 3
+mapping_dim = 128
 scale = 10
-# B = torch.randn((num_input_channels, mapping_dim)) * scale
-save_path = '../data/minidataset/B.pth'
+B = torch.randn((num_input_channels, mapping_dim)) * scale
+# save_path = 'data/minidataset/B.pth'
 # torch.save(B, save_path)
-B = torch.load(save_path)
+# B = torch.load(save_path)
 
 summaries_dir = os.path.join(opt.logging_root, opt.experiment_name, 'summary')
 summaries_dir_siren = os.path.join(opt.logging_root, opt.experiment_name, 'summary', 'siren')
@@ -68,8 +85,8 @@ summaries_dir_ours = os.path.join(opt.logging_root, opt.experiment_name, 'summar
 writer_siren = SummaryWriter(summaries_dir_siren)
 writer_ours = SummaryWriter(summaries_dir_ours)
 
-steps_siren = [1000*i for i in range(opt.num_epochs_siren // 1000 + 1)]
-steps_ours = [1000*i for i in range(opt.num_epochs_ours // 1000 + 1)]
+steps_siren = [1000 * i for i in range(opt.num_epochs_siren // 1000 + 1)]
+steps_ours = [1000 * i for i in range(opt.num_epochs_ours // 1000 + 1)]
 
 sum_psnr_siren = [0 for i in range(opt.num_epochs_siren // 1000 + 1)]
 sum_psnr_ours = [0 for i in range(opt.num_epochs_ours // 1000 + 1)]
@@ -78,78 +95,53 @@ results_siren = None
 results_ours = None
 
 counter = 0
-for png_file in jpg_files[:20]:
-    counter += 1
-    full_path = os.path.abspath(png_file)
-    file_name = os.path.basename(png_file)
-    print(f"Processing file: {full_path}")
+for sample_idx, sample in enumerate(shapenet):
 
+    in_dict, gt_dict = sample
+    img = gt_dict['img']
 
-    img_dataset = dataio.ImageFile(full_path)
-    coord_dataset = dataio.Implicit2DWrapper(img_dataset, sidelength=64, compute_diff='none', grid='our')
-    print(coord_dataset)
+    x = VoxelObject(in_dict['idx'], in_dict['coords'], img.view(64, 64, 64))
 
-    break
-    image_resolution = (64, 64)
-    #
-    dataloader = DataLoader(coord_dataset, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)
+    print(f"Processing object: {sample_idx}")
+    image_resolution = (64, 64, 64)
+    dataloader_ours = DataLoader(x, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)
 
+    model_ours = modules.ImplicitMLP(B=B)
 
-    #B = torch.randn((2, 128)) * 10
+    state_dict = model_ours.state_dict()
+    layers = []
+    layer_names = []
+    for l in state_dict:
+        shape = state_dict[l].shape
+        layers.append(np.prod(shape))
+        layer_names.append(l)
 
-    # Define the model.
-    ##### OUR
-    if opt.model_type == 'sine' or opt.model_type == 'relu' or opt.model_type == 'tanh' or opt.model_type == 'selu' or opt.model_type == 'elu'\
-            or opt.model_type == 'softplus':
-        model_ours = modules.ImplicitMLP(B=B)
-
-        state_dict = model_ours.state_dict()
-        layers = []
-        layer_names = []
-        for l in state_dict:
-            shape = state_dict[l].shape
-            layers.append(np.prod(shape))
-            layer_names.append(l)
-        # print(layers)
-
-        #model = modules.SingleBVPNet(type=opt.model_type, mode='mlp', hidden_features=128, out_features=3, sidelength=image_resolution)
-    # elif opt.model_type == 'rbf' or opt.model_type == 'nerf':
-    #     model = modules.SingleBVPNet(type='relu', mode=opt.model_type, hidden_features=128, out_features=3, sidelength=image_resolution)
-    # else:
-    #     raise NotImplementedError
-    model_ours.load_state_dict(torch.load('logs/002328.jpg/ours/checkpoints/model_final.pth', map_location=device))
     model_ours.to(device)
 
+    dataloader_siren = DataLoader(x, shuffle=True, batch_size=opt.batch_size,
+                                  pin_memory=True, num_workers=0)
+    image_resolution = (64, 64, 64)
 
-    #### SIREN
-
-    img_dataset_siren = dataio.ImageFile(full_path)
-    coord_dataset_siren = dataio.Implicit2DWrapper(img_dataset_siren, sidelength=64, compute_diff='none', grid='siren')
-    image_resolution = (64, 64)
-
-    dataloader_siren = DataLoader(coord_dataset_siren, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)
-
-    model_siren = modules.SingleBVPNet(sidelength=image_resolution, out_features = 3)
+    model_siren = modules.SingleBVPNet(sidelength=image_resolution, out_features=1, in_features=3)
     model_siren.to(device)
 
-    root_path_ours = os.path.join(opt.logging_root, opt.experiment_name, file_name, 'ours')
-    root_path_siren = os.path.join(opt.logging_root, opt.experiment_name, file_name, 'siren')
-
-    #root_path = os.path.join(opt.logging_root, opt.experiment_name)
+    root_path_ours = os.path.join(opt.logging_root, opt.experiment_name, str(sample_idx), 'ours')
+    root_path_siren = os.path.join(opt.logging_root, opt.experiment_name, str(sample_idx), 'siren')
 
     # Define the loss
     loss_fn = partial(loss_functions.image_mse, None)
     summary_fn = partial(utils.write_image_summary, image_resolution)
 
-    psnr_siren = training.train(model=model_siren, train_dataloader=dataloader_siren, epochs=opt.num_epochs_siren, lr=opt.lr_siren,
-                   steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
-                   model_dir=root_path_siren, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
-                   writer=writer_siren)
-
-    psnr_ours = training.train(model=model_ours, train_dataloader=dataloader, epochs=opt.num_epochs_ours, lr= opt.lr_ours,
-                   steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
-                   model_dir=root_path_ours, loss_fn=loss_fn, summary_fn=summary_fn, device = device, writer=writer_ours)
-
+    psnr_siren = training.train(model=model_siren, train_dataloader=dataloader_siren, epochs=opt.num_epochs_siren,
+                                lr=opt.lr_siren,
+                                steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
+                                model_dir=root_path_siren, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
+                                writer=writer_siren)
+    psnr_ours = training.train(model=model_ours, train_dataloader=dataloader_ours, epochs=opt.num_epochs_ours,
+                               lr=opt.lr_ours,
+                               steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
+                               model_dir=root_path_ours, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
+                               writer=writer_ours)
     if results_siren is not None:
         results_siren = np.vstack((results_siren, np.array(psnr_siren)))
     else:
@@ -160,10 +152,9 @@ for png_file in jpg_files[:20]:
     else:
         results_ours = np.array(psnr_ours)
 
-
 mean_psnr_siren = np.mean(results_siren, 0)
-mean_psnr_ours = np.mean(results_ours,0 )
-std_psnr_siren = np.std(results_siren,0)
+mean_psnr_ours = np.mean(results_ours, 0)
+std_psnr_siren = np.std(results_siren, 0)
 std_psnr_ours = np.std(results_ours, 0)
 
 # for psnr, step in zip(mean_psnr_siren, steps_siren):
@@ -176,7 +167,6 @@ std_psnr_ours = np.std(results_ours, 0)
 
 
 import matplotlib.pyplot as plt
-
 
 plt.plot(steps_siren, mean_psnr_siren, label='siren', color='orange', marker='o')
 
@@ -198,4 +188,3 @@ plt.grid(True)
 
 # Save the plot as a PNG file
 plt.savefig('psnr_vs_steps_with_std_text.png', dpi=300)
-

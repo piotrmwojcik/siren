@@ -12,22 +12,22 @@ import shutil
 
 
 def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_checkpoint, model_dir, loss_fn,
-          summary_fn, device, writer, val_dataloader=None, double_precision=False, clip_grad=False, use_lbfgs=False, loss_schedules=None):
-
+          summary_fn, device, writer, val_dataloader=None, double_precision=False, clip_grad=False, use_lbfgs=False,
+          loss_schedules=None):
     psnrs = []
 
     optim = torch.optim.Adam(lr=lr, params=model.parameters())
 
-    # copy settings from Raissi et al. (2019) and here 
+    # copy settings from Raissi et al. (2019) and here
     # https://github.com/maziarraissi/PINNs
     if use_lbfgs:
         optim = torch.optim.LBFGS(lr=lr, params=model.parameters(), max_iter=50000, max_eval=50000,
                                   history_size=50, line_search_fn='strong_wolfe')
 
-    model_name= model_dir.split('/')[-2]
+    model_name = model_dir.split('/')[-2]
 
     if os.path.exists(model_dir):
-        val = input("The model directory %s exists. Overwrite? (y/n)"%model_dir)
+        val = input("The model directory %s exists. Overwrite? (y/n)" % model_dir)
         if val == 'y':
             shutil.rmtree(model_dir)
 
@@ -46,14 +46,14 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
         train_losses = []
         for epoch in range(epochs):
             # if not epoch % epochs_til_checkpoint and epoch:
-                # torch.save(model.state_dict(),
-                #            os.path.join(checkpoints_dir, 'model_epoch_%04d.pth' % epoch))
-                # np.savetxt(os.path.join(checkpoints_dir, 'train_losses_epoch_%04d.txt' % epoch),
-                #            np.array(train_losses))
+            # torch.save(model.state_dict(),
+            #            os.path.join(checkpoints_dir, 'model_epoch_%04d.pth' % epoch))
+            # np.savetxt(os.path.join(checkpoints_dir, 'train_losses_epoch_%04d.txt' % epoch),
+            #            np.array(train_losses))
 
             for step, (model_input, gt) in enumerate(train_dataloader):
                 start_time = time.time()
-            
+
                 model_input = {key: value.to(device) for key, value in model_input.items()}
                 gt = {key: value.to(device) for key, value in gt.items()}
 
@@ -68,9 +68,10 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                         losses = loss_fn(model_output, gt)
                         train_loss = 0.
                         for loss_name, loss in losses.items():
-                            train_loss += loss.mean() 
+                            train_loss += loss.mean()
                         train_loss.backward()
                         return train_loss
+
                     optim.step(closure)
 
                 model_output = model(model_input)
@@ -93,7 +94,7 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                 if not total_steps % steps_til_summary:
                     torch.save(model.state_dict(),
                                os.path.join(checkpoints_dir, 'model_current.pth'))
-                    psnrs.append(utils.calculate_psnr((64,64), model_output, gt))
+                    psnrs.append(utils.calculate_psnr((64, 64, 64), model_output, gt))
 
                 if not use_lbfgs:
                     optim.zero_grad()
@@ -110,7 +111,8 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                 pbar.update(1)
 
                 if not total_steps % steps_til_summary:
-                    tqdm.write("Epoch %d, Total loss %0.6f, iteration time %0.6f" % (epoch, train_loss, time.time() - start_time))
+                    tqdm.write("Epoch %d, Total loss %0.6f, iteration time %0.6f" % (
+                    epoch, train_loss, time.time() - start_time))
 
                     if val_dataloader is not None:
                         print("Running validation set...")
@@ -131,7 +133,6 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                    os.path.join(checkpoints_dir, 'model_final.pth'))
 
     return psnrs
-
 
 
 class LinearDecaySchedule():

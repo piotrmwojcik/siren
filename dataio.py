@@ -67,8 +67,8 @@ def lin2img(tensor, image_resolution=None):
         height = image_resolution[0]
         width = image_resolution[1]
 
-    return tensor.permute(0, 2, 1).view(batch_size, channels, height, width)
 
+    return tensor.permute(0, 2, 1).view(batch_size, channels, height, width)
 
 def grads2img(gradients):
     mG = gradients.detach().squeeze(0).permute(-2, -1, -3).cpu()
@@ -402,7 +402,8 @@ class WaveSource(Dataset):
             self.counter = 0
 
         return {'coords': coords}, {'source_boundary_values': boundary_values, 'dirichlet_mask': dirichlet_mask,
-                                    'squared_slowness': squared_slowness, 'squared_slowness_grid': squared_slowness_grid}
+                                    'squared_slowness': squared_slowness,
+                                    'squared_slowness_grid': squared_slowness_grid}
 
 
 class PointCloud(Dataset):
@@ -765,7 +766,6 @@ class ImageGeneralizationWrapper(torch.utils.data.Dataset):
         return in_dict, gt_dict
 
 
-
 # in_folder: where to find the data (train, val, test)
 # color: whether to load in color
 # idx_to_sample: which index to sample (usefull if wanting to fit a single image)
@@ -906,5 +906,81 @@ class CompositeGradients(Dataset):
                    'grads1': self.grads1,
                    'grads2': self.grads2,
                    'gradients': self.comp_grads}
+
+        return in_dict, gt_dict
+
+
+class ShapeNetVoxel(Dataset):
+    def __init__(self, split='train', dataset_root='datasets'):
+        """
+        Initialize the ShapeNetVoxel dataset.
+
+        Args:
+            split (str): Specify the dataset split ('train' or 'test').
+            sampling (int or None): Number of points to sample per voxel grid.
+            dataset_root (str): Path to the dataset directory.
+        """
+        self.dataset_root = dataset_root
+        self.data_path = os.path.join(dataset_root, 'shapenet', 'all_vox256_img', 'all_vox256_img_' + split + '.pth')
+        self.data_voxels = torch.load(self.data_path).byte()  # Load the voxel data
+        self.split = split  # Dataset split (train/test)
+        self.grid = self.get_mgrid_voxel(64)  # Create a grid of voxel coordinates
+        self.affine = (None, None)  # Can be used for future transformations
+
+    def __len__(self):
+        """
+        Returns the total number of samples in the dataset.
+        """
+        if self.split == "train":
+            return 20  # 35019
+        else:
+            return 8762
+
+    def dec2bin(self, x, bits):
+        """
+        Convert decimal to binary.
+
+        Args:
+            x (Tensor): Input tensor.
+            bits (int): Number of bits for conversion.
+
+        Returns:
+            Tensor: Binary representation of the input tensor.
+        """
+        mask = 2 ** torch.arange(bits - 1, -1, -1).to(x.device, x.dtype)
+        return x.unsqueeze(-1).bitwise_and(mask).ne(0).byte().flip(-1)
+
+    def get_mgrid_voxel(self, dim):
+        """
+        Generate a voxel grid of shape (dim x dim x dim).
+
+        Args:
+            dim (int): Dimension of the grid.
+
+        Returns:
+            Tensor: Generated grid coordinates.
+        """
+        ranges = [torch.linspace(-1, 1, steps=dim) for _ in range(3)]
+        grid = torch.stack(torch.meshgrid(*ranges), dim=-1).reshape(-1, 3)  # Flatten the grid into (N, 3)
+        return grid
+
+    def __getitem__(self, idx):
+        """
+        Returns the input and target data for a single voxel grid.
+
+        Args:
+            idx (int): Index of the voxel grid.
+
+        Returns:
+            dict: A dictionary containing the input coordinates and the ground truth voxel values.
+        """
+        points = self.grid.float()  # Coordinates in the grid
+
+        encoded_voxels = self.data_voxels[idx]  # Get the voxel grid at index `idx`
+        occs = self.dec2bin(encoded_voxels, 8).view(-1, 1).float()  # Convert voxel values to binary
+
+        # Return a dictionary of input coordinates and ground truth occupancy values
+        in_dict = {'idx': idx, 'coords': points}
+        gt_dict = {'img': occs}
 
         return in_dict, gt_dict
