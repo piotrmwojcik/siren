@@ -76,7 +76,7 @@ B = torch.randn((num_input_channels, mapping_dim)) * scale
 # torch.save(B, save_path)
 # B = torch.load(save_path)
 
-print(get_grid(4, 4, b=0))
+print(dataio.get_grid(4, 4, b=0))
 
 shapenet = dataio.ShapeNet(dataset_root=opt.shapenet_path)
 
