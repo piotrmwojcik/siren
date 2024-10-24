@@ -33,7 +33,7 @@ class VoxelObject(Dataset):
         return in_dict, gt_dict
 
 
-root_path = ''
+root_path = 'C:\\Personal\\HyperDiffusion\\data'
 shapenet = dataio.ShapeNetVoxel(dataset_root=root_path)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -46,7 +46,7 @@ p.add_argument('--experiment_name', type=str, default='3d_voxel',
                help='Name of subdirectory in logging_root where summaries and checkpoints will be saved.')
 
 # General training options
-p.add_argument('--batch_size', type=int, default=32)
+p.add_argument('--batch_size', type=int, default=1)
 p.add_argument('--lr_siren', type=float, default=1e-4, help='learning rate. default=1e-4')
 p.add_argument('--lr_ours', type=float, default=5e-4)
 p.add_argument('--num_epochs_siren', type=int, default=10001,
