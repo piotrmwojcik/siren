@@ -21,14 +21,15 @@ class GaussianFourierFeatureTransform(nn.Module):
      returns a tensor of size [batches, mapping_dim*2, width, height].
     """
 
-    def __init__(self, B, num_input_channels=2, mapping_dim=256):
+    def __init__(self, B, num_input_channels=3, mapping_dim=256):
         super().__init__()
 
         self._num_input_channels = num_input_channels
         self.mapping_dim = mapping_dim
-        self._B = B #torch.randn((num_input_channels, mapping_dim)) * scale
+        self._B = B  # torch.randn((num_input_channels, mapping_dim)) * scale
 
     def forward(self, x, phase=None):
+        x = x.view(1, 3, 128, 128)
         batches, channels, width, height = x.shape
         assert channels == self._num_input_channels, "Expected input to have {} channels (got {} channels)".format(
             self._num_input_channels, channels
@@ -51,6 +52,7 @@ class GaussianFourierFeatureTransform(nn.Module):
             x = 2 * pi * x
 
         return torch.cat([torch.sin(x), torch.cos(x)], dim=1)
+
 
 class BatchLinear(nn.Linear, MetaModule):
     '''A linear meta-layer that can deal with batched weight matrices and biases, as for instance output by a
@@ -91,13 +93,13 @@ class FCBlock(MetaModule):
 
         # Dictionary that maps nonlinearity name to the respective function, initialization, and, if applicable,
         # special first-layer initialization scheme
-        nls_and_inits = {'sine':(Sine(), sine_init, first_layer_sine_init),
-                         'relu':(nn.ReLU(inplace=True), init_weights_normal, None),
-                         'sigmoid':(nn.Sigmoid(), init_weights_xavier, None),
-                         'tanh':(nn.Tanh(), init_weights_xavier, None),
-                         'selu':(nn.SELU(inplace=True), init_weights_selu, None),
-                         'softplus':(nn.Softplus(), init_weights_normal, None),
-                         'elu':(nn.ELU(inplace=True), init_weights_elu, None)}
+        nls_and_inits = {'sine': (Sine(), sine_init, first_layer_sine_init),
+                         'relu': (nn.ReLU(inplace=True), init_weights_normal, None),
+                         'sigmoid': (nn.Sigmoid(), init_weights_xavier, None),
+                         'tanh': (nn.Tanh(), init_weights_xavier, None),
+                         'selu': (nn.SELU(inplace=True), init_weights_selu, None),
+                         'softplus': (nn.Softplus(), init_weights_normal, None),
+                         'elu': (nn.ELU(inplace=True), init_weights_elu, None)}
 
         nl, nl_weight_init, first_layer_init = nls_and_inits[nonlinearity]
 
@@ -127,13 +129,12 @@ class FCBlock(MetaModule):
         if self.weight_init is not None:
             self.net.apply(self.weight_init)
 
-        if first_layer_init is not None: # Apply special initialization to first layer, if applicable.
+        if first_layer_init is not None:  # Apply special initialization to first layer, if applicable.
             self.net[0].apply(first_layer_init)
 
     def forward(self, coords, params=None, **kwargs):
         if params is None:
             params = OrderedDict(self.named_parameters())
-
 
         output = self.net(coords, params=get_subdict(params, 'net'))
         return output
@@ -165,8 +166,8 @@ class FMMLinear(nn.Module):
     """
     FMM layer via BMM instead of F.conv
     """
-    def __init__(self, in_channel: int, out_channel: int, factorization_rank: int):
 
+    def __init__(self, in_channel: int, out_channel: int, factorization_rank: int):
         super().__init__()
 
         self.in_channel = in_channel
@@ -193,7 +194,7 @@ class FMMLinear(nn.Module):
             nn.init.uniform_(self.bias, -bound, bound)
 
     def forward(self, input):
-        W = self.left_matrix @ self.right_matrix # [batch_size, out_channel, in_channel]
+        W = self.left_matrix @ self.right_matrix  # [batch_size, out_channel, in_channel]
         W /= np.sqrt(self.rank)
         out = F.linear(input, W, self.bias)
 
@@ -208,12 +209,9 @@ class ImplicitMLP(nn.Module):
         self.linear2 = FMMLinear(256, 128, 10)
         self.linear3 = nn.Linear(128, 32)
         self.linear4 = nn.Linear(32, 16)
-        self.linear5 = nn.Linear(16, 3)
+        self.linear5 = nn.Linear(16, 1)
 
     def forward(self, model_input):
-        h = 64
-        w = 64
-
         coords_org = model_input['coords'].clone().detach().requires_grad_(True)
         coords = coords_org
 
@@ -252,7 +250,7 @@ class SingleBVPNet(MetaModule):
 
         self.image_downsampling = ImageDownsampling(sidelength=kwargs.get('sidelength', None),
                                                     downsample=kwargs.get('downsample', False))
-        #self.gff = GaussianFourierFeatuareTransform(mapping_dim=hidden_features )
+        # self.gff = GaussianFourierFeatuareTransform(mapping_dim=hidden_features )
         self.net = FCBlock(in_features=in_features, out_features=out_features, num_hidden_layers=num_hidden_layers,
                            hidden_features=hidden_features, outermost_linear=True, nonlinearity=type)
         # print(self)
@@ -341,6 +339,7 @@ class ImageDownsampling(nn.Module):
 
 class PosEncodingNeRF(nn.Module):
     '''Module to add positional encoding as in NeRF [Mildenhall et al. 2020].'''
+
     def __init__(self, in_features, sidelength=None, fn_samples=None, use_nyquist=True):
         super().__init__()
 
@@ -484,6 +483,7 @@ class ConvImgEncoder(nn.Module):
 class PartialConvImgEncoder(nn.Module):
     '''Adapted from https://github.com/NVIDIA/partialconv/blob/master/models/partialconv2d.py
     '''
+
     def __init__(self, channel, image_resolution):
         super().__init__()
 
@@ -513,7 +513,7 @@ class PartialConvImgEncoder(nn.Module):
     def forward(self, I):
         M_c = I.clone().detach()
         M_c = M_c > 0.
-        M_c = M_c[:,0,...]
+        M_c = M_c[:, 0, ...]
         M_c = M_c.unsqueeze(1)
         M_c = M_c.float()
 
@@ -533,6 +533,7 @@ class PartialConvImgEncoder(nn.Module):
 
 class Conv2dResBlock(nn.Module):
     '''Aadapted from https://github.com/makora9143/pytorch-convcnp/blob/master/convcnp/modules/resblock.py'''
+
     def __init__(self, in_channel, out_channel=128):
         super().__init__()
         self.convs = nn.Sequential(
@@ -574,11 +575,13 @@ class PartialConv2d(nn.Conv2d):
         super(PartialConv2d, self).__init__(*args, **kwargs)
 
         if self.multi_channel:
-            self.weight_maskUpdater = torch.ones(self.out_channels, self.in_channels, self.kernel_size[0], self.kernel_size[1])
+            self.weight_maskUpdater = torch.ones(self.out_channels, self.in_channels, self.kernel_size[0],
+                                                 self.kernel_size[1])
         else:
             self.weight_maskUpdater = torch.ones(1, 1, self.kernel_size[0], self.kernel_size[1])
 
-        self.slide_winsize = self.weight_maskUpdater.shape[1] * self.weight_maskUpdater.shape[2] * self.weight_maskUpdater.shape[3]
+        self.slide_winsize = self.weight_maskUpdater.shape[1] * self.weight_maskUpdater.shape[2] * \
+                             self.weight_maskUpdater.shape[3]
 
         self.last_size = (None, None, None, None)
         self.update_mask = None
@@ -596,13 +599,15 @@ class PartialConv2d(nn.Conv2d):
                 if mask_in is None:
                     # if mask is not provided, create a mask
                     if self.multi_channel:
-                        mask = torch.ones(input.data.shape[0], input.data.shape[1], input.data.shape[2], input.data.shape[3]).to(input)
+                        mask = torch.ones(input.data.shape[0], input.data.shape[1], input.data.shape[2],
+                                          input.data.shape[3]).to(input)
                     else:
                         mask = torch.ones(1, 1, input.data.shape[2], input.data.shape[3]).to(input)
                 else:
                     mask = mask_in
 
-                self.update_mask = F.conv2d(mask, self.weight_maskUpdater, bias=None, stride=self.stride, padding=self.padding, dilation=self.dilation, groups=1)
+                self.update_mask = F.conv2d(mask, self.weight_maskUpdater, bias=None, stride=self.stride,
+                                            padding=self.padding, dilation=self.dilation, groups=1)
 
                 # for mixed precision training, change 1e-8 to 1e-6
                 self.mask_ratio = self.slide_winsize / (self.update_mask + 1e-8)

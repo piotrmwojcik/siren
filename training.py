@@ -94,7 +94,7 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                 if not total_steps % steps_til_summary:
                     torch.save(model.state_dict(),
                                os.path.join(checkpoints_dir, 'model_current.pth'))
-                    psnrs.append(utils.calculate_psnr((64, 64, 64), model_output, gt))
+                    psnrs.append(utils.calculate_psnr((1, 128, 128), model_output, gt))
 
                 if not use_lbfgs:
                     optim.zero_grad()

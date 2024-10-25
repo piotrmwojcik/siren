@@ -106,10 +106,10 @@ for sample_idx, sample in enumerate(shapenet):
     in_dict, gt_dict = sample
     img = gt_dict['img']
 
-    x = VoxelObject(in_dict['idx'], in_dict['coords'], img)
+    x = VoxelObject(in_dict['idx'], in_dict['coords'], img.view(1, 128, 128))
 
     print(f"Processing object: {sample_idx}")
-    image_resolution = (64, 64, 64)
+    image_resolution = (1, 128, 128)
     dataloader_ours = DataLoader(x, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)
 
     model_ours = modules.ImplicitMLP(B=B)
@@ -126,7 +126,7 @@ for sample_idx, sample in enumerate(shapenet):
 
     dataloader_siren = DataLoader(x, shuffle=True, batch_size=opt.batch_size,
                                   pin_memory=True, num_workers=0)
-    image_resolution = (64, 64, 64)
+    image_resolution = (1, 128, 128)
 
     model_siren = modules.SingleBVPNet(sidelength=image_resolution, out_features=1, in_features=3)
     model_siren.to(device)
@@ -138,40 +138,41 @@ for sample_idx, sample in enumerate(shapenet):
     loss_fn = partial(loss_functions.image_mse, None)
     summary_fn = partial(utils.write_image_summary, image_resolution)
 
-    # to działa:
-    # psnr_siren = training.train(model=model_siren, train_dataloader=dataloader_siren, epochs=opt.num_epochs_siren,
-    #                             lr=opt.lr_siren,
-    #                             steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
-    #                             model_dir=root_path_siren, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
-    #                             writer=writer_siren)
+    psnr_siren = training.train(model=model_siren, train_dataloader=dataloader_siren, epochs=opt.num_epochs_siren,
+                                lr=opt.lr_siren,
+                                steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
+                                model_dir=root_path_siren, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
+                                writer=writer_siren)
     psnr_ours = training.train(model=model_ours, train_dataloader=dataloader_ours, epochs=opt.num_epochs_ours,
                                lr=opt.lr_ours,
                                steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
                                model_dir=root_path_ours, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
                                writer=writer_ours)
-    # if results_siren is not None:
-    #     results_siren = np.vstack((results_siren, np.array(psnr_siren)))
-    # else:
-    #     results_siren = np.array(psnr_siren)
+    if results_siren is not None:
+        results_siren = np.vstack((results_siren, np.array(psnr_siren)))
+    else:
+        results_siren = np.array(psnr_siren)
 
     if results_ours is not None:
         results_ours = np.vstack((results_ours, np.array(psnr_ours)))
     else:
         results_ours = np.array(psnr_ours)
 
+    counter += 1
+    if counter == 40: break
+
 mean_psnr_siren = np.mean(results_siren, 0)
 mean_psnr_ours = np.mean(results_ours, 0)
 std_psnr_siren = np.std(results_siren, 0)
 std_psnr_ours = np.std(results_ours, 0)
 
-# for psnr, step in zip(mean_psnr_siren, steps_siren):
-#     print(step, psnr)
-#     writer_siren.add_scalar('psnr', psnr, step)
-#
-# for psnr, step in zip(mean_psnr_ours, steps_ours):
-#     print(step, psnr)
-#     writer_ours.add_scalar('psnr', psnr, step)
+for psnr, step in zip(mean_psnr_siren, steps_siren):
+    print(step, psnr)
+    writer_siren.add_scalar('psnr', psnr, step)
 
+for psnr, step in zip(mean_psnr_ours, steps_ours):
+    print(step, psnr)
+    writer_ours.add_scalar('psnr', psnr, step)
 
 import matplotlib.pyplot as plt
 
