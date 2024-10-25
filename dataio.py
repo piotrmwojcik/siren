@@ -58,7 +58,6 @@ def get_grid(h, w, b=0, norm=True, device="cpu"):
     else:
         return grid[0].permute(2, 0, 1)  # [UV, H, W]
 
-
 def lin2img(tensor, image_resolution=None):
     batch_size, num_samples, channels = tensor.shape
     if image_resolution is None:
