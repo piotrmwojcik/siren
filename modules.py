@@ -3,7 +3,7 @@ from torch import nn
 from math import pi
 from einops import rearrange
 from torchmeta.modules import (MetaModule, MetaSequential)
-from torchmeta.modules.utils import get_subdict
+# from torchmeta.modules.utils import get_subdict
 import numpy as np
 from collections import OrderedDict
 import math
@@ -51,6 +51,45 @@ class GaussianFourierFeatureTransform(nn.Module):
             x = 2 * pi * x
 
         return torch.cat([torch.sin(x), torch.cos(x)], dim=1)
+
+
+class GaussianFourierFeatureTransform3D(nn.Module):
+    """
+    An implementation of Gaussian Fourier feature mapping for 5D input tensors.
+    Given an input of size [batches, num_input_channels, width, height, depth],
+    returns a tensor of size [batches, mapping_dim*2, width, height, depth].
+    """
+
+    def __init__(self, B, num_input_channels=2, mapping_dim=256, scale=10):
+        super().__init__()
+
+        self._num_input_channels = num_input_channels
+        self.mapping_dim = mapping_dim
+        # Random Fourier feature matrix B of shape [num_input_channels, mapping_dim]
+        self._B = torch.randn((num_input_channels, mapping_dim)) * scale
+
+    def forward(self, x, phase=None):
+        batches, channels, width, height, depth = x.shape
+        assert channels == self._num_input_channels, \
+            "Expected input to have {} channels (got {} channels)".format(
+                self._num_input_channels, channels
+            )
+
+
+        x = x.permute(0, 2, 3, 4, 1).reshape(batches * width * height * depth, channels)
+
+        x = x @ self._B.to(x.device)
+
+        x = x.view(batches, width, height, depth, self.mapping_dim)
+
+        x = x.permute(0, 4, 1, 2, 3)
+
+        if phase is not None:
+            x = 2 * pi * x + phase
+        else:
+            x = 2 * pi * x
+
+        return torch.cat([torch.sin(x), torch.cos(x)], dim = 1)
 
 class BatchLinear(nn.Linear, MetaModule):
     '''A linear meta-layer that can deal with batched weight matrices and biases, as for instance output by a
@@ -135,7 +174,7 @@ class FCBlock(MetaModule):
             params = OrderedDict(self.named_parameters())
 
 
-        output = self.net(coords, params=get_subdict(params, 'net'))
+        output = self.net(coords, params=self.get_subdict(params, 'net'))
         return output
 
     def forward_with_activations(self, coords, params=None, retain_grad=False):
@@ -148,10 +187,10 @@ class FCBlock(MetaModule):
         x = coords.clone().detach().requires_grad_(True)
         activations['input'] = x
         for i, layer in enumerate(self.net):
-            subdict = get_subdict(params, 'net.%d' % i)
+            subdict = self.get_subdict(params, 'net.%d' % i)
             for j, sublayer in enumerate(layer):
                 if isinstance(sublayer, BatchLinear):
-                    x = sublayer(x, params=get_subdict(subdict, '%d' % j))
+                    x = sublayer(x, params=self.get_subdict(subdict, '%d' % j))
                 else:
                     x = sublayer(x)
 
@@ -235,7 +274,7 @@ class ImplicitMLP(nn.Module):
 class ImplicitMLP3D(nn.Module):
     def __init__(self, B):
         super(ImplicitMLP3D, self).__init__()
-        self.gff = GaussianFourierFeatureTransform(mapping_dim=128, num_input_channels=3, B=B)
+        self.gff = GaussianFourierFeatureTransform3D(mapping_dim=128, num_input_channels=3, B=B)
         self.linear1 = FMMLinear(128 * 2, 256, 70)
         self.linear2 = FMMLinear(256, 128, 10)
         self.linear3 = nn.Linear(128, 32)
@@ -247,7 +286,7 @@ class ImplicitMLP3D(nn.Module):
         coords_org = model_input['coords'].clone().detach().requires_grad_(True)
         coords = coords_org
         x = self.gff(coords)
-        x = rearrange(x, "b c h w -> (b h w) c")
+        x = rearrange(x, "b c h w d-> (b h w d) c")
         x = self.linear1(x)
         x = F.relu(x)
         x = self.linear2(x)
@@ -302,7 +341,7 @@ class SingleBVPNet(MetaModule):
         # elif self.mode == 'nerf':
         #     coords = self.positional_encoding(coords)
 
-        output = self.net(coords, get_subdict(params, 'net'))
+        output = self.net(coords, self.get_subdict(params, 'net'))
 
         return {'model_in': coords_org, 'model_out': output}
 

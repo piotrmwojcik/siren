@@ -48,7 +48,7 @@ p.add_argument('--lr_siren', type=float, default=1e-4, help='learning rate. defa
 p.add_argument('--lr_ours', type=float, default=5e-4)
 p.add_argument('--num_epochs_siren', type=int, default=10001,
                help='Number of epochs to train for.')
-p.add_argument('--num_epochs_ours', type=int, default=10001)
+p.add_argument('--num_epochs_ours', type=int, default=6001)
 
 # p.add_argument('--image_path', type=str, required=True,
 #                help='Path to the gt image.')
@@ -71,12 +71,13 @@ opt = p.parse_args()
 num_input_channels = 3
 mapping_dim = 128
 scale = 10
-B = torch.randn((num_input_channels, mapping_dim)) * scale
 
-# save_path = 'data/minidataset/B.pth'
+# B = torch.randn((num_input_channels, mapping_dim)) * scale
+
+save_path = 'data/minidataset/B2.pth'
 # torch.save(B, save_path)
-# B = torch.load(save_path)
-shapenet = dataio.ShapeNet(dataset_root=opt.shapenet_path)
+B = torch.load(save_path)
+shapenet = dataio.ShapeNetVoxel(dataset_root=opt.shapenet_path)
 
 summaries_dir = os.path.join(opt.logging_root, opt.experiment_name, 'summary')
 summaries_dir_siren = os.path.join(opt.logging_root, opt.experiment_name, 'summary', 'siren')
@@ -98,10 +99,12 @@ counter = 0
 
 for sample_idx, sample in enumerate(shapenet):
     counter += 1
+
     in_dict, gt_dict = sample
     img = gt_dict['img']
 
-    coords = in_dict['coords'].permute(1, 0).view(3, 128, 128)
+    coords = in_dict['coords'].permute(1,0).view(-1,64,64,64)
+    torch.save(img, "img.pth")
     x = VoxelObject(in_dict['idx'], coords, img)
     print(f"Processing object: {sample_idx}")
     image_resolution = (64, 64, 64)
@@ -109,22 +112,13 @@ for sample_idx, sample in enumerate(shapenet):
 
     model_ours = modules.ImplicitMLP3D(B=B)
 
-    state_dict = model_ours.state_dict()
-    layers = []
-    layer_names = []
-    for l in state_dict:
-        shape = state_dict[l].shape
-        layers.append(np.prod(shape))
-        layer_names.append(l)
-
     model_ours.to(device)
-
     dataloader_siren = DataLoader(x, shuffle=True, batch_size=opt.batch_size,
                                   pin_memory=True, num_workers=0)
     image_resolution = (64, 64, 64)
 
-    model_siren = modules.SingleBVPNet(sidelength=image_resolution, out_features=1, in_features=3)
-    model_siren.to(device)
+    # model_siren = modules.SingleBVPNet(sidelength=image_resolution, out_features=1, in_features=3)
+    # model_siren.to(device)
 
     root_path_ours = os.path.join(opt.logging_root, opt.experiment_name, str(sample_idx), 'ours')
     root_path_siren = os.path.join(opt.logging_root, opt.experiment_name, str(sample_idx), 'siren')
@@ -143,7 +137,7 @@ for sample_idx, sample in enumerate(shapenet):
                                lr=opt.lr_ours,
                                steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
                                model_dir=root_path_ours, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
-                               writer=writer_ours, save_img=True)
+                               writer=writer_ours, save_img=False)
     # if results_siren is not None:
     #     results_siren = np.vstack((results_siren, np.array(psnr_siren)))
     # else:
