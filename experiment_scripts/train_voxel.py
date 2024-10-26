@@ -143,7 +143,7 @@ for sample_idx, sample in enumerate(shapenet):
                                lr=opt.lr_ours,
                                steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
                                model_dir=root_path_ours, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
-                               writer=writer_ours)
+                               writer=writer_ours, save_img=True)
     # if results_siren is not None:
     #     results_siren = np.vstack((results_siren, np.array(psnr_siren)))
     # else:
@@ -153,8 +153,11 @@ for sample_idx, sample in enumerate(shapenet):
         results_ours = np.vstack((results_ours, np.array(psnr_ours)))
     else:
         results_ours = np.array(psnr_ours)
+
+
     if sample_idx == 1:
         break
+
 
 # mean_psnr_siren = np.mean(results_siren, 0)
 mean_psnr_ours = np.mean(results_ours, 0)
@@ -190,5 +193,4 @@ plt.legend()
 
 plt.grid(True)
 
-# Save the plot as a PNG file
 plt.savefig(f'exp_{opt.experiment_name}', dpi=300)

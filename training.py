@@ -9,12 +9,14 @@ import time
 import numpy as np
 import os
 import shutil
+import matplotlib.pyplot as plt
 
 
 def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_checkpoint, model_dir, loss_fn,
-          summary_fn, device, writer, val_dataloader=None, double_precision=False, clip_grad=False, use_lbfgs=False,
+          summary_fn, device, writer, save_img = False, val_dataloader=None, double_precision=False, clip_grad=False, use_lbfgs=False,
           loss_schedules=None):
     psnrs = []
+    time1 = time.time()
 
     optim = torch.optim.Adam(lr=lr, params=model.parameters())
 
@@ -24,7 +26,9 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
         optim = torch.optim.LBFGS(lr=lr, params=model.parameters(), max_iter=50000, max_eval=50000,
                                   history_size=50, line_search_fn='strong_wolfe')
 
-    model_name = model_dir.split('/')[-2]
+    model_dir_split = model_dir.split('/')
+    log_dir = "/".join(model_dir_split[:-2])
+    model_name = model_dir_split[-2]
 
     if os.path.exists(model_dir):
         val = input("The model directory %s exists. Overwrite? (y/n)" % model_dir)
@@ -129,9 +133,30 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
 
                 total_steps += 1
 
+        if save_img:
+            path = os.path.join(log_dir,'comparisions')
+            os.makedirs(path, exist_ok=True)
+
+            gt = gt['img'].squeeze(0).reshape(128,128)
+            res = model_output['model_out'].detach().squeeze(0).round().reshape(128,128)
+            fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+
+            axes[0].imshow(gt, cmap='gray')
+            axes[0].set_title('GT')
+            axes[0].axis('off')
+
+            axes[1].imshow(res, cmap='gray')
+            axes[1].set_title('Model Output')
+            axes[1].axis('off')
+
+            plt.tight_layout()
+            plt.savefig(f"{path}/comparison_{model_name}.png", dpi=300, bbox_inches='tight')
+
         torch.save(model.state_dict(),
                    os.path.join(checkpoints_dir, 'model_final.pth'))
+    time2 = time.time()
 
+    print(f"Training took {time2-time1} seconds")
     return psnrs
 
 
