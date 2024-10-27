@@ -100,7 +100,6 @@ for sample_idx, sample in enumerate(shapenet):
     counter += 1
     in_dict, gt_dict = sample
     img = gt_dict['img']
-
     coords = in_dict['coords'].permute(1, 0).view(3, 128, 128)
     x = VoxelObject(in_dict['idx'], coords, img)
     print(f"Processing object: {sample_idx}")
@@ -112,10 +111,6 @@ for sample_idx, sample in enumerate(shapenet):
     state_dict = model_ours.state_dict()
     layers = []
     layer_names = []
-    for l in state_dict:
-        shape = state_dict[l].shape
-        layers.append(np.prod(shape))
-        layer_names.append(l)
 
     model_ours.to(device)
 
