@@ -2,7 +2,9 @@ import csv
 import glob
 import math
 import os
+import pickle
 import random
+from io import BytesIO
 
 import lmdb
 import matplotlib.colors as colors
@@ -17,6 +19,7 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision.transforms import Resize, Compose, ToTensor, Normalize
+import torch.nn.functional as F
 
 
 def get_mgrid(sidelen, dim=2):
@@ -406,61 +409,6 @@ class WaveSource(Dataset):
         return {'coords': coords}, {'source_boundary_values': boundary_values, 'dirichlet_mask': dirichlet_mask,
                                     'squared_slowness': squared_slowness,
                                     'squared_slowness_grid': squared_slowness_grid}
-
-
-class PointCloud(Dataset):
-    def __init__(self, pointcloud_path, on_surface_points, keep_aspect_ratio=True):
-        super().__init__()
-
-        print("Loading point cloud")
-        point_cloud = np.genfromtxt(pointcloud_path)
-        print("Finished loading point cloud")
-
-        coords = point_cloud[:, :3]
-        self.normals = point_cloud[:, 3:]
-
-        # Reshape point cloud such that it lies in bounding box of (-1, 1) (distorts geometry, but makes for high
-        # sample efficiency)
-        coords -= np.mean(coords, axis=0, keepdims=True)
-        if keep_aspect_ratio:
-            coord_max = np.amax(coords)
-            coord_min = np.amin(coords)
-        else:
-            coord_max = np.amax(coords, axis=0, keepdims=True)
-            coord_min = np.amin(coords, axis=0, keepdims=True)
-
-        self.coords = (coords - coord_min) / (coord_max - coord_min)
-        self.coords -= 0.5
-        self.coords *= 2.
-
-        self.on_surface_points = on_surface_points
-
-    def __len__(self):
-        return self.coords.shape[0] // self.on_surface_points
-
-    def __getitem__(self, idx):
-        point_cloud_size = self.coords.shape[0]
-
-        off_surface_samples = self.on_surface_points  # **2
-        total_samples = self.on_surface_points + off_surface_samples
-
-        # Random coords
-        rand_idcs = np.random.choice(point_cloud_size, size=self.on_surface_points)
-
-        on_surface_coords = self.coords[rand_idcs, :]
-        on_surface_normals = self.normals[rand_idcs, :]
-
-        off_surface_coords = np.random.uniform(-1, 1, size=(off_surface_samples, 3))
-        off_surface_normals = np.ones((off_surface_samples, 3)) * -1
-
-        sdf = np.zeros((total_samples, 1))  # on-surface = 0
-        sdf[self.on_surface_points:, :] = -1  # off-surface = -1
-
-        coords = np.concatenate((on_surface_coords, off_surface_coords), axis=0)
-        normals = np.concatenate((on_surface_normals, off_surface_normals), axis=0)
-
-        return {'coords': torch.from_numpy(coords).float()}, {'sdf': torch.from_numpy(sdf).float(),
-                                                              'normals': torch.from_numpy(normals).float()}
 
 
 class Video(Dataset):
@@ -1051,7 +999,7 @@ class SRNDatasetsLMDB(Dataset):
     """
 
     def __init__(
-            self, category, opt, split="train", world_scale=1.0, dataset_root='datasets', zero_to_one=False
+            self, category, split="train", world_scale=1.0, dataset_root='datasets', zero_to_one=False
     ):
         """
         :param split train | val | test
@@ -1062,7 +1010,7 @@ class SRNDatasetsLMDB(Dataset):
             raise NotImplementedError("please category name of SRN Dataset")
 
         self.base_path = os.path.join(dataset_root, 'srn_cars_lmdb', "cars_" + split)
-        assert os.path.exists(self.base_path)
+        print("Loading SRN dataset", self.base_path)
 
         self.env = lmdb.open(
             self.base_path,
@@ -1076,7 +1024,6 @@ class SRNDatasetsLMDB(Dataset):
         if not self.env:
             raise IOError('Cannot open lmdb dataset', self.base_path)
 
-        print("Loading SRN dataset", self.base_path, "name:")
         with self.env.begin(write=False) as txn:
             self.length = int(txn.get('length'.encode('utf-8')).decode('utf-8'))
 
@@ -1087,22 +1034,19 @@ class SRNDatasetsLMDB(Dataset):
             Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
 
-        self.debug = opt.debug
-        self.zero_to_one = True if opt.rgb_activation == 'sigmoid' or zero_to_one else False
-        self.subsampled_views = opt.subsampled_views
-        self.image_size = (opt.resolution, opt.resolution)
+        self.zero_to_one = False
+        self.subsampled_views = 32
+        self.image_size = (128, 128)
         self.world_scale = world_scale
         self._coord_trans = torch.diag(
             torch.tensor([1, -1, -1, 1], dtype=torch.float32)
         )
 
-        self.z_near = opt.near
-        self.z_far = opt.far
+        self.z_near = 0.8
+        self.z_far = 1.8
         self.lindisp = False
 
     def __len__(self):
-        if self.debug:
-            return 1  # for debug (NeRF check)
         return self.length
 
     def __getitem__(self, index):
@@ -1158,3 +1102,58 @@ class SRNDatasetsLMDB(Dataset):
         out_dict = {'img': all_imgs}
 
         return in_dict, out_dict
+
+
+class PointCloud(Dataset):
+    def __init__(self, pointcloud_path, on_surface_points, keep_aspect_ratio=True):
+        super().__init__()
+
+        print("Loading point cloud")
+        point_cloud = np.genfromtxt(pointcloud_path)
+        print("Finished loading point cloud")
+
+        coords = point_cloud[:, :3]
+        self.normals = point_cloud[:, 3:]
+
+        # Reshape point cloud such that it lies in bounding box of (-1, 1) (distorts geometry, but makes for high
+        # sample efficiency)
+        coords -= np.mean(coords, axis=0, keepdims=True)
+        if keep_aspect_ratio:
+            coord_max = np.amax(coords)
+            coord_min = np.amin(coords)
+        else:
+            coord_max = np.amax(coords, axis=0, keepdims=True)
+            coord_min = np.amin(coords, axis=0, keepdims=True)
+
+        self.coords = (coords - coord_min) / (coord_max - coord_min)
+        self.coords -= 0.5
+        self.coords *= 2.
+
+        self.on_surface_points = on_surface_points
+
+    def __len__(self):
+        return self.coords.shape[0] // self.on_surface_points
+
+    def __getitem__(self, idx):
+        point_cloud_size = self.coords.shape[0]
+
+        off_surface_samples = self.on_surface_points  # **2
+        total_samples = self.on_surface_points + off_surface_samples
+
+        # Random coords
+        rand_idcs = np.random.choice(point_cloud_size, size=self.on_surface_points)
+
+        on_surface_coords = self.coords[rand_idcs, :]
+        on_surface_normals = self.normals[rand_idcs, :]
+
+        off_surface_coords = np.random.uniform(-1, 1, size=(off_surface_samples, 3))
+        off_surface_normals = np.ones((off_surface_samples, 3)) * -1
+
+        sdf = np.zeros((total_samples, 1))  # on-surface = 0
+        sdf[self.on_surface_points:, :] = -1  # off-surface = -1
+
+        coords = np.concatenate((on_surface_coords, off_surface_coords), axis=0)
+        normals = np.concatenate((on_surface_normals, off_surface_normals), axis=0)
+
+        return {'coords': torch.from_numpy(coords).float()}, {'sdf': torch.from_numpy(sdf).float(),
+                                                              'normals': torch.from_numpy(normals).float()}
