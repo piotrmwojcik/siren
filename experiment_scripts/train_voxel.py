@@ -48,7 +48,7 @@ p.add_argument('--lr_siren', type=float, default=1e-4, help='learning rate. defa
 p.add_argument('--lr_ours', type=float, default=5e-4)
 p.add_argument('--num_epochs_siren', type=int, default=10001,
                help='Number of epochs to train for.')
-p.add_argument('--num_epochs_ours', type=int, default=6001)
+p.add_argument('--num_epochs_ours', type=int, default=10001)
 
 # p.add_argument('--image_path', type=str, required=True,
 #                help='Path to the gt image.')
@@ -97,14 +97,17 @@ results_ours = None
 
 counter = 0
 
+sample = shapenet[0]
+in_dict, gt_dict = sample
+coords = in_dict['coords'] #zawsze takie same
+coords = ((coords + 1) / 2 * (64 - 1)).round()
+
 for sample_idx, sample in enumerate(shapenet):
     counter += 1
 
-    in_dict, gt_dict = sample
     img = gt_dict['img']
+    # torch.save(img, "img.pth") #GT
 
-    coords = in_dict['coords'].permute(1,0).view(-1,64,64,64)
-    torch.save(img, "img.pth")
     x = VoxelObject(in_dict['idx'], coords, img)
     print(f"Processing object: {sample_idx}")
     image_resolution = (64, 64, 64)
@@ -154,9 +157,9 @@ for sample_idx, sample in enumerate(shapenet):
 
 
 # mean_psnr_siren = np.mean(results_siren, 0)
-mean_psnr_ours = np.mean(results_ours, 0)
+# mean_psnr_ours = np.mean(results_ours, 0)
 # std_psnr_siren = np.std(results_siren, 0)
-std_psnr_ours = np.std(results_ours, 0)
+# std_psnr_ours = np.std(results_ours, 0)
 
 # for psnr, step in zip(mean_psnr_siren, steps_siren):
 #     print(step, psnr)
@@ -167,24 +170,24 @@ std_psnr_ours = np.std(results_ours, 0)
 #     writer_ours.add_scalar('psnr', psnr, step)
 
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 # plt.plot(steps_siren, mean_psnr_siren, label='siren', color='orange', marker='o')
 
-plt.plot(steps_ours, mean_psnr_ours, label='ours', color='blue', marker='o')
+# plt.plot(steps_ours, mean_psnr_ours, label='ours', color='blue', marker='o')
 
 # for i in range(len(steps_siren)):
 #     plt.text(steps_siren[i], mean_psnr_siren[i], f"±{std_psnr_siren[i]:.2f}", color='purple', fontsize=9)
 
 # Annotate standard deviations for Ours
-for i in range(len(steps_ours)):
-    plt.text(steps_ours[i], mean_psnr_ours[i], f"±{std_psnr_ours[i]:.2f}", color='green', fontsize=9)
-
-plt.xlabel('Steps')
-plt.ylabel('PSNR')
-plt.title(f'PSNR with Standard Deviations for {counter} images')
-plt.legend()
-
-plt.grid(True)
-
-plt.savefig(f'exp_{opt.experiment_name}', dpi=300)
+# for i in range(len(steps_ours)):
+#     plt.text(steps_ours[i], mean_psnr_ours[i], f"±{std_psnr_ours[i]:.2f}", color='green', fontsize=9)
+#
+# plt.xlabel('Steps')
+# plt.ylabel('PSNR')
+# plt.title(f'PSNR with Standard Deviations for {counter} images')
+# plt.legend()
+#
+# plt.grid(True)
+#
+# plt.savefig(f'exp_{opt.experiment_name}', dpi=300)

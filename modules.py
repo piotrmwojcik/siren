@@ -274,7 +274,7 @@ class ImplicitMLP(nn.Module):
 class ImplicitMLP3D(nn.Module):
     def __init__(self, B):
         super(ImplicitMLP3D, self).__init__()
-        self.gff = GaussianFourierFeatureTransform3D(mapping_dim=128, num_input_channels=3, B=B)
+        self.gff = GaussianFourierFeatureTransform(mapping_dim=128, num_input_channels=3, B=B)
         self.linear1 = FMMLinear(128 * 2, 256, 70)
         self.linear2 = FMMLinear(256, 128, 10)
         self.linear3 = nn.Linear(128, 32)
@@ -286,7 +286,7 @@ class ImplicitMLP3D(nn.Module):
         coords_org = model_input['coords'].clone().detach().requires_grad_(True)
         coords = coords_org
         x = self.gff(coords)
-        x = rearrange(x, "b c h w d-> (b h w d) c")
+        x = rearrange(x, "b c h w-> (b h w) c")
         x = self.linear1(x)
         x = F.relu(x)
         x = self.linear2(x)

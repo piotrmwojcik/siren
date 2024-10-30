@@ -58,6 +58,12 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
             for step, (model_input, gt) in enumerate(train_dataloader):
                 start_time = time.time()
 
+                idcs = np.random.randint(0, 262143, size=16384)
+
+                model_input['coords'] = model_input['coords'][0][idcs].permute(1,0).view(3,128,128).unsqueeze(0)
+                gt['img'] = gt['img'][0][idcs].unsqueeze(0)
+
+
                 model_input = {key: value.to(device) for key, value in model_input.items()}
                 gt = {key: value.to(device) for key, value in gt.items()}
 
