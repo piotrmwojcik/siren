@@ -58,10 +58,30 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
             for step, (model_input, gt) in enumerate(train_dataloader):
                 start_time = time.time()
 
-                idcs = np.random.randint(0, 262143, size=16384)
+                labels = gt['img'].squeeze()  # shape: [200000]
 
-                model_input['coords'] = model_input['coords'][0][idcs].permute(1,0).view(3,128,128).unsqueeze(0)
-                gt['img'] = gt['img'][0][idcs].unsqueeze(0)
+                inside_indices = (labels == 1).nonzero(as_tuple=True)[0]
+                outside_indices = (labels == 0).nonzero(as_tuple=True)[0]
+
+                num_inside_samples = 500
+                num_outside_samples = 15884
+
+                inside_sampled_indices = inside_indices[torch.randperm(inside_indices.size(0))[:num_inside_samples]]
+                outside_sampled_indices = outside_indices[torch.randperm(outside_indices.size(0))[:num_outside_samples]]
+
+                sampled_indices = torch.cat([inside_sampled_indices, outside_sampled_indices])
+                sampled_indices = sampled_indices[torch.randperm(16384)]
+
+                gt['img'] = gt['img'][0][sampled_indices].unsqueeze(0)
+                model_input['coords'] = model_input['coords'][0][sampled_indices].permute(1, 0).view(3, 128,128).unsqueeze(0)
+
+                szum = torch.randn_like(model_input['coords'].squeeze()) * 0.01
+                model_input['coords'] += szum
+
+                # unique_values, counts = np.unique(gt['img'], return_counts=True)
+                # for value, count in zip(unique_values, counts):
+                #     print(f"Value: {value}, Count: {count}")
+
 
 
                 model_input = {key: value.to(device) for key, value in model_input.items()}

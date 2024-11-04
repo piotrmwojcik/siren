@@ -5,8 +5,9 @@
 import sys
 import os
 sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ) )
-
+import numpy as np
 import dataio, meta_modules, utils, training, loss_functions, modules
+import matplotlib.pyplot as plt
 
 from torch.utils.data import DataLoader
 import configargparse
@@ -19,7 +20,7 @@ p.add_argument('--experiment_name', type=str, required=True,
                help='Name of subdirectory in logging_root where summaries and checkpoints will be saved.')
 
 # General training options
-p.add_argument('--batch_size', type=int, default=1400)
+p.add_argument('--batch_size', type=int, default=20000)
 p.add_argument('--lr', type=float, default=1e-4, help='learning rate. default=5e-5')
 p.add_argument('--num_epochs', type=int, default=10000,
                help='Number of epochs to train for.')
@@ -40,6 +41,44 @@ opt = p.parse_args()
 
 sdf_dataset = dataio.PointCloud(opt.point_cloud_path, on_surface_points=opt.batch_size)
 dataloader = DataLoader(sdf_dataset, shuffle=True, batch_size=1, pin_memory=True, num_workers=0)
+
+x = sdf_dataset[1]
+print(x[1])
+# Assuming the data is in dictionary form as given:
+data = {
+    'coords': x[0]['coords'],
+    'sdf': x[1]['sdf'],
+    'normals': x[1]['normals']
+}
+
+coords = data['coords'].numpy()
+sdf = data['sdf'].numpy().flatten()
+normals = data['normals'].numpy()
+
+coords = coords[sdf==0]
+
+
+fig = plt.figure(figsize=(10, 7))
+ax = fig.add_subplot(111, projection='3d')
+
+unique_values, counts = np.unique(sdf, return_counts=True)
+for value, count in zip(unique_values, counts):
+    print(f"Value: {value}, Count: {count}")
+
+# colors = ['cyan' if val == 0 else 'blue' for val in sdf]
+scatter = ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], c="blue", s=5, depthshade=True)
+
+# ax.quiver(coords[:, 0], coords[:, 1], coords[:, 2],
+#           normals[:, 0], normals[:, 1], normals[:, 2],
+#           length=0.1, color='red', normalize=True)
+
+ax.set_xlabel("X")
+ax.set_ylabel("Y")
+ax.set_zlabel("Z")
+ax.set_title("3D SDF Visualization with Normals")
+
+plt.show()
+
 
 # Define the model.
 if opt.model_type == 'nerf':

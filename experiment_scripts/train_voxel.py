@@ -100,11 +100,12 @@ counter = 0
 sample = shapenet[0]
 in_dict, gt_dict = sample
 coords = in_dict['coords'] #zawsze takie same
-coords = ((coords + 1) / 2 * (64 - 1)).round()
+# coords = ((coords + 1) / 2 * (64 - 1)).round()
 
 for sample_idx, sample in enumerate(shapenet):
     counter += 1
 
+    in_dict, gt_dict = sample
     img = gt_dict['img']
     # torch.save(img, "img.pth") #GT
 

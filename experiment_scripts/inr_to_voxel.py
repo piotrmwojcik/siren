@@ -13,7 +13,7 @@ from scipy.interpolate import griddata
 save_path = '/Users/kacpermarzol/PycharmProjects/siren2/siren/data/minidataset/B2.pth'
 B = torch.load(save_path)
 
-coords_full_grid = torch.load('/Users/kacpermarzol/PycharmProjects/siren2/siren/in_dict_shapenet_voxel.pth')['coords']
+# coords_full_grid = torch.load('/Users/kacpermarzol/PycharmProjects/siren2/siren/in_dict_shapenet_voxel.pth')['coords']
 coords_hmm = torch.load('/Users/kacpermarzol/PycharmProjects/siren2/siren/coords.pth')['coords']
 input_hmm = {
         'idx': torch.tensor([0]),
@@ -50,48 +50,109 @@ def generate_mlp_from_weights(weights):
     mlp.load_state_dict(state_dict)
     return mlp
 
-def generate_input(i):
+def generate_input(coords_full_grid, i):
     idx_tensor = torch.tensor([0])
     coords = coords_full_grid[i * 16384 : (i+1) * 16384 ].transpose(1,0).view(3,128,128)
     input = {
         'idx': idx_tensor,
-        'coords':  ((coords + 1) / 2 * (64 - 1)).round().unsqueeze(0)
+        # 'coords':  ((coords + 1) / 2 * (64 - 1)).round().unsqueeze(0)
+        'coords':  coords.unsqueeze(0)
     }
 
     return input
 
 if __name__ == '__main__':
-    path = '/Users/kacpermarzol/PycharmProjects/siren2/siren/logs/cguk15/0/ours/checkpoints/model_final.pth'
+    path = '/Users/kacpermarzol/PycharmProjects/siren2/siren/logs/shapenet_voxel_sample500in_basic_rep_szum/0/ours/checkpoints/model_final.pth'
     weights = torch.load(path)
     model = modules.ImplicitMLP3D(B = B)
     model.load_state_dict(weights)
-
-
     results = []
 
-    for i in range(16):
-        input = generate_input(i)
+    grid_size = 64
+    coords = dataio.get_mgrid(grid_size,3)
+    coords += 0.1
+
+    for i in range(grid_size ** 3 // 16384):
+        input = generate_input(coords, i)
         output = model(input)['model_out'].detach().squeeze(0).round()
         results.append(output)
     results = torch.cat(results)
 
-    grid_size = 64
     grid = np.zeros((grid_size, grid_size, grid_size))
-
-    coords = coords_full_grid
+    # coords = coords_hmm.view(3,-1).permute(1,0)
+    # coords = coords_full_grid
     coords = ((coords + 1) / 2 * (grid_size - 1)).numpy().round() ### !!! ten round bardzo wazny
     indices = np.clip(coords.astype(int), 0, grid_size - 1)
-
     # do wizualizacji GT
     # results = torch.load('/Users/kacpermarzol/PycharmProjects/siren2/siren/img.pth') ## GT
+    # results = torch.load('/Users/kacpermarzol/PycharmProjects/siren2/siren/img2.pth')
 
-    grid[indices[:, 0], indices[:, 1], indices[:, 2]] = results.flatten()
-
+    # results=torch.ones_like(output)
+    # results[results ==  0] = -1
+    # results[results ==  1 ] = 0
+    # results[results ==  -1 ] = 1
     unique_values, counts = np.unique(results, return_counts=True)
     for value, count in zip(unique_values, counts):
         print(f"Value: {value}, Count: {count}")
+    grid[indices[:, 0], indices[:, 1], indices[:, 2]] = results.flatten()
+    #
+    #
+    # verts, faces, _, _ = measure.marching_cubes(grid, level=0.5)
+    # mesh = trimesh.Trimesh(vertices=verts, faces=faces)
+    # mesh.show()
 
-    verts, faces, _, _ = measure.marching_cubes(grid, level=0.5)
-    mesh = trimesh.Trimesh(vertices=verts, faces=faces)
-    mesh.show()
+
+    threshold = 0.5
+    # grid[:, :29, :] = 0
+    # grid[:, 30:, :] = 0
+    voxel_data = grid > threshold  # Boolean array for voxels above threshold
+
+    # Plotting the voxels
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Use plt.voxels to plot
+    ax.voxels(voxel_data, facecolors='cyan', edgecolor=None)
+
+    # Labels and plot display
+    ax.set_xlabel("X axis")
+    ax.set_ylabel("Y axis")
+    ax.set_zlabel("Z axis")
+    plt.show()
+
+
+
+
+    # filled = (results == 1)
+    # filled_points = coords[filled.flatten()]
+    # unfilled = (results == 0)
+    # unfilled_points = coords[unfilled.flatten()]
+    #
+    # fig = plt.figure(figsize=(10, 8))
+    # ax = fig.add_subplot(111, projection='3d')
+    #
+    # ax.scatter(filled_points[:, 0], filled_points[:, 1], filled_points[:, 2],
+    #            c='blue', s=1, label='Filled (1)')
+    # #
+    # # Plot unfilled points (value 0) in red
+    # # ax.scatter(unfilled_points[:, 0], unfilled_points[:, 1], unfilled_points[:, 2],
+    # #            c='red', s=1, label='Unfilled (0)')
+    #
+    # # Set plot labels and title
+    # ax.set_xlim([-1, 1])
+    # ax.set_ylim([-1, 1])
+    # ax.set_zlim([-1, 1])
+    #
+    # ax.set_xlabel('X')
+    # ax.set_ylabel('Y')
+    # ax.set_zlabel('Z')
+    # ax.set_title('3D Point Cloud Visualization with Color-Coded Points')
+    #
+    # # Add legend
+    # ax.legend(loc='upper right')
+    #
+    # # Optionally adjust the view angle (e.g., flipped view)
+    # ax.view_init(elev=270, azim=90)  # Modify as needed
+    #
+    # plt.show()
 
