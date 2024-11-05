@@ -475,6 +475,7 @@ class Video(Dataset):
     def __len__(self):
         return 1
 
+
     def __getitem__(self, idx):
         return self.vid
 
@@ -1031,3 +1032,6 @@ class ShapeNetVoxel(Dataset):
         gt_dict = {'img': occs}
 
         return in_dict, gt_dict
+
+
+

@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 import configargparse
 from functools import partial
 from torch.utils.tensorboard import SummaryWriter
-
+import h5py
 
 class VoxelObject(Dataset):
     def __init__(self, idx, coords, img):
@@ -64,7 +64,7 @@ p.add_argument('--model_type', type=str, default='sine',
                     'and in the future: "mixed" (first layer sine, other layers tanh)')
 
 p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained model.')
-p.add_argument('--shapenet_path', type=str, default=None, required=True, help='Checkpoint to trained model.')
+# p.add_argument('--shapenet_path', type=str, default=None, required=True, help='Checkpoint to trained model.')
 
 opt = p.parse_args()
 
@@ -77,7 +77,7 @@ scale = 10
 save_path = 'data/minidataset/B2.pth'
 # torch.save(B, save_path)
 B = torch.load(save_path)
-shapenet = dataio.ShapeNetVoxel(dataset_root=opt.shapenet_path)
+# shapenet = dataio.ShapeNetVoxel(dataset_root=opt.shapenet_path)
 
 summaries_dir = os.path.join(opt.logging_root, opt.experiment_name, 'summary')
 summaries_dir_siren = os.path.join(opt.logging_root, opt.experiment_name, 'summary', 'siren')
@@ -97,19 +97,21 @@ results_ours = None
 
 counter = 0
 
-sample = shapenet[0]
-in_dict, gt_dict = sample
-coords = in_dict['coords'] #zawsze takie same
+# sample = shapenet[0]
+# in_dict, gt_dict = sample
+# coords = in_dict['coords'] #zawsze takie same
 # coords = ((coords + 1) / 2 * (64 - 1)).round()
+dataset = h5py.File('/Users/kacpermarzol/PycharmProjects/hyperdiffusionproject/HyperDiffusion/siren/all_vox_tmp.hdf5', "r")
 
-for sample_idx, sample in enumerate(shapenet):
+
+for sample_idx in range(3):
     counter += 1
 
-    in_dict, gt_dict = sample
-    img = gt_dict['img']
-    # torch.save(img, "img.pth") #GT
+    coords = dataset['points'][sample_idx]
+    torch.save(coords, "coords_dataset.pth")
+    img = dataset['occs'][sample_idx]
+    x = VoxelObject(sample_idx, coords, img)
 
-    x = VoxelObject(in_dict['idx'], coords, img)
     print(f"Processing object: {sample_idx}")
     image_resolution = (64, 64, 64)
     dataloader_ours = DataLoader(x, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)

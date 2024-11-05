@@ -55,33 +55,42 @@ def generate_input(coords_full_grid, i):
     coords = coords_full_grid[i * 16384 : (i+1) * 16384 ].transpose(1,0).view(3,128,128)
     input = {
         'idx': idx_tensor,
-        # 'coords':  ((coords + 1) / 2 * (64 - 1)).round().unsqueeze(0)
         'coords':  coords.unsqueeze(0)
     }
 
     return input
 
 if __name__ == '__main__':
-    path = '/Users/kacpermarzol/PycharmProjects/siren2/siren/logs/shapenet_voxel_sample500in_basic_rep_szum/0/ours/checkpoints/model_final.pth'
+    path = '/Users/__name__kacpermarzol/PycharmProjects/siren2/siren/logs/shapenet_voxel_sample500in_basic_rep_szum/0/ours/checkpoints/model_final.pth'
+    path = '/Users/kacpermarzol/PycharmProjects/siren2/siren/logs/TEST_DATASET/0/ours/checkpoints/model_final.pth'
     weights = torch.load(path)
     model = modules.ImplicitMLP3D(B = B)
     model.load_state_dict(weights)
     results = []
 
     grid_size = 64
-    coords = dataio.get_mgrid(grid_size,3)
-    coords += 0.1
 
-    for i in range(grid_size ** 3 // 16384):
-        input = generate_input(coords, i)
-        output = model(input)['model_out'].detach().squeeze(0).round()
-        results.append(output)
+    # coords = dataio.get_mgrid(grid_size,3) / 2
+    coords = torch.from_numpy(torch.load('/Users/kacpermarzol/PycharmProjects/siren2/siren/coords_dataset.pth'))
+    # coords += 0.01
+    results.append(model({
+        'idx': 0,
+        'coords':  coords.permute(1,0).view(3,128,128).unsqueeze(0)
+    })['model_out'].detach().squeeze(0).round())
+
+    # for i in range(grid_size ** 3 // 16384):
+    #     input = generate_input(coords, i)
+    #     output = model(input)['model_out'].detach().squeeze(0).round()
+    #     results.append(output)
+    # #
     results = torch.cat(results)
 
     grid = np.zeros((grid_size, grid_size, grid_size))
     # coords = coords_hmm.view(3,-1).permute(1,0)
     # coords = coords_full_grid
-    coords = ((coords + 1) / 2 * (grid_size - 1)).numpy().round() ### !!! ten round bardzo wazny
+    # coords = dataio.get_mgrid(grid_size,3) / 2
+
+    coords = ((coords + 0.5) * (grid_size - 1)).numpy().round() ### !!! ten round bardzo wazny
     indices = np.clip(coords.astype(int), 0, grid_size - 1)
     # do wizualizacji GT
     # results = torch.load('/Users/kacpermarzol/PycharmProjects/siren2/siren/img.pth') ## GT
@@ -103,11 +112,8 @@ if __name__ == '__main__':
 
 
     threshold = 0.5
-    # grid[:, :29, :] = 0
-    # grid[:, 30:, :] = 0
     voxel_data = grid > threshold  # Boolean array for voxels above threshold
 
-    # Plotting the voxels
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111, projection='3d')
 
