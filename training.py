@@ -66,15 +66,15 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                 # num_inside_samples = 500
                 # num_outside_samples = 15884
                 #
-                # inside_sampled_indices = inside_indices[torch.randperm(inside_indices.size(0))[:num_inside_samples]]
+                random_indices = torch.randperm(262144)[0:16384]
+
                 # outside_sampled_indices = outside_indices[torch.randperm(outside_indices.size(0))[:num_outside_samples]]
                 #
                 # sampled_indices = torch.cat([inside_sampled_indices, outside_sampled_indices])
                 # sampled_indices = sampled_indices[torch.randperm(16384)]
                 #
-                # gt['img'] = gt['img'][0][sampled_indices].unsqueeze(0)
-
-                model_input['coords'] = model_input['coords'][0].permute(1, 0).view(3, 128,128).unsqueeze(0)
+                gt['img'] = gt['img'][0][random_indices].unsqueeze(0)
+                model_input['coords'] = model_input['coords'][0][random_indices].permute(1, 0).view(3, 128,128).unsqueeze(0)
 
                 # szum = torch.randn_like(model_input['coords'].squeeze()) * 0.01
                 # model_input['coords'] += szum
