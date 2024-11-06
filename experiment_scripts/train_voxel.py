@@ -45,7 +45,7 @@ p.add_argument('--experiment_name', type=str, default='3d_voxel',
 # General training options
 p.add_argument('--batch_size', type=int, default=1)
 p.add_argument('--lr_siren', type=float, default=1e-4, help='learning rate. default=1e-4')
-p.add_argument('--lr_ours', type=float, default=1e-2)
+p.add_argument('--lr_ours', type=float, default=5e-4)
 p.add_argument('--num_epochs_siren', type=int, default=10001,
                help='Number of epochs to train for.')
 p.add_argument('--num_epochs_ours', type=int, default=10001)
