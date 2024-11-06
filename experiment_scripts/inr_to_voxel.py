@@ -110,7 +110,6 @@ if __name__ == '__main__':
     # mesh = trimesh.Trimesh(vertices=verts, faces=faces)
     # mesh.show()
 
-
     threshold = 0.5
     voxel_data = grid > threshold  # Boolean array for voxels above threshold
 
@@ -124,7 +123,13 @@ if __name__ == '__main__':
     ax.set_xlabel("X axis")
     ax.set_ylabel("Y axis")
     ax.set_zlabel("Z axis")
+
     plt.show()
+
+    # Save the plot as an image file (e.g., PNG)
+    save_path = "voxel_plot.png"  # Define the desired save path and file name
+    plt.savefig(save_path, format='png', dpi=300)
+    print(f"Voxel plot saved as {save_path}")
 
 
 
