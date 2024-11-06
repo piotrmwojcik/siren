@@ -74,7 +74,7 @@ scale = 10
 
 # B = torch.randn((num_input_channels, mapping_dim)) * scale
 
-save_path = '/data/pwojcik/siren/random_mod/B2.pth'
+save_path = '/data/pwojcik/siren/random_mod/B3.pth'
 # torch.save(B, save_path)
 B = torch.load(save_path)
 # shapenet = dataio.ShapeNetVoxel(dataset_root=opt.shapenet_path)
