@@ -74,7 +74,7 @@ scale = 10
 
 # B = torch.randn((num_input_channels, mapping_dim)) * scale
 
-save_path = 'data/minidataset/B2.pth'
+save_path = '/data/pwojcik/siren/random_mod/B2.pth'
 # torch.save(B, save_path)
 B = torch.load(save_path)
 # shapenet = dataio.ShapeNetVoxel(dataset_root=opt.shapenet_path)
@@ -101,7 +101,7 @@ counter = 0
 # in_dict, gt_dict = sample
 # coords = in_dict['coords'] #zawsze takie same
 # coords = ((coords + 1) / 2 * (64 - 1)).round()
-dataset = h5py.File('/Users/kacpermarzol/PycharmProjects/hyperdiffusionproject/HyperDiffusion/siren/all_vox_tmp.hdf5', "r")
+dataset = h5py.File('data/all_vox_tmp.hdf5', "r")
 
 
 for sample_idx in range(3):
