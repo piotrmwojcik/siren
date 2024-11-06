@@ -143,7 +143,7 @@ for sample_idx in range(3):
                                lr=opt.lr_ours,
                                steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
                                model_dir=root_path_ours, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
-                               writer=writer_ours, save_img=True)
+                               writer=writer_ours, save_img=False)
     # if results_siren is not None:
     #     results_siren = np.vstack((results_siren, np.array(psnr_siren)))
     # else:
