@@ -10,7 +10,7 @@ import dataio
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 
-save_path = '/Users/kacpermarzol/PycharmProjects/siren2/siren/data/minidataset/B2.pth'
+save_path = '/data/pwojcik/siren/random_mod/B3.pth'
 B = torch.load(save_path)
 
 # coords_full_grid = torch.load('/Users/kacpermarzol/PycharmProjects/siren2/siren/in_dict_shapenet_voxel.pth')['coords']
@@ -52,7 +52,7 @@ def generate_mlp_from_weights(weights):
 
 def generate_input(coords_full_grid, i):
     idx_tensor = torch.tensor([0])
-    coords = coords_full_grid[i * 16384 : (i+1) * 16384 ].transpose(1,0).view(3,128,128)
+    coords = coords_full_grid[i * 16384 : (i+1) * 16384].transpose(1,0).view(3,128,128)
     input = {
         'idx': idx_tensor,
         'coords':  coords.unsqueeze(0)
@@ -62,7 +62,7 @@ def generate_input(coords_full_grid, i):
 
 if __name__ == '__main__':
     # path = '/Users/__name__kacpermarzol/PycharmProjects/siren2/siren/logs/shapenet_voxel_sample500in_basic_rep_szum/0/ours/checkpoints/model_final.pth'
-    path = '/Users/kacpermarzol/PycharmProjects/siren2/siren/logs/TEST_DATASET2/0/ours/checkpoints/model_final.pth'
+    path = '/data/pwojcik/siren/logs/TEST_DATASET2/0/ours/checkpoints/model_final.pth'
     weights = torch.load(path)
     model = modules.ImplicitMLP3D(B = B)
     model.load_state_dict(weights)
