@@ -372,7 +372,6 @@ def write_image_summary(image_resolution, model, model_input, gt,
 
 
 
-
 def write_laplace_summary(model, model_input, gt, model_output, writer, total_steps, prefix='train_'):
     # Plot comparison images
     gt_img = dataio.lin2img(gt['img'])

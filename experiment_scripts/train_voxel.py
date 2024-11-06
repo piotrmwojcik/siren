@@ -154,10 +154,10 @@ for sample_idx in range(3):
     else:
         results_ours = np.array(psnr_ours)
 
-
     if sample_idx == 1:
         break
-
+    else:
+        print(sample_idx)
 
 # mean_psnr_siren = np.mean(results_siren, 0)
 # mean_psnr_ours = np.mean(results_ours, 0)
