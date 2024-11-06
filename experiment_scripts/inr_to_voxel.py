@@ -14,11 +14,11 @@ save_path = '/data/pwojcik/siren/random_mod/B3.pth'
 B = torch.load(save_path)
 
 # coords_full_grid = torch.load('/Users/kacpermarzol/PycharmProjects/siren2/siren/in_dict_shapenet_voxel.pth')['coords']
-coords_hmm = torch.load('./coords_dataset.pth')['coords']
-input_hmm = {
-        'idx': torch.tensor([0]),
-        'coords': coords_hmm.unsqueeze(0)
-    }
+#coords_hmm = torch.load('./coords_dataset.pth')['coords']
+#input_hmm = {
+#        'idx': torch.tensor([0]),
+#        'coords': coords_hmm.unsqueeze(0)
+#    }
 
 def dec2bin(x, bits):
     """
