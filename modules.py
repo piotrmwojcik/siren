@@ -278,7 +278,7 @@ class ImplicitMLP3D(nn.Module):
         #self.linear1 = FMMLinear(128 * 2, 256, 70)
         self.linear1 = nn.Linear(128 * 2, 256)
         #self.linear2 = FMMLinear(256, 128, 10)
-        self.linear2 = nn.Linear(128, 128)
+        self.linear2 = nn.Linear(256, 128)
         self.linear3 = nn.Linear(128, 32)
         self.linear4 = nn.Linear(32, 16)
         self.linear5 = nn.Linear(16, 1)
