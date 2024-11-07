@@ -97,7 +97,7 @@ if __name__ == '__main__':
     verts, faces, normals, values = np.zeros((0, 3)), np.zeros((0, 3)), np.zeros((0, 3)), np.zeros(0)
     try:
         verts, faces, normals, values = measure.marching_cubes_lewiner(
-            grid, level=0.0, spacing=[voxel_size] * 3
+            grid, level=0.5, spacing=[64] * 3
         )
     except Exception as e:
         print('Marching cubes failed! ', e)
