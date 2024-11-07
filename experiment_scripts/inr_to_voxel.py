@@ -1,6 +1,7 @@
 import sys, os
 import torch
 import numpy as np
+from skimage.measure import marching_cubes
 from skimage import measure
 import trimesh
 
