@@ -1,6 +1,7 @@
 import sys, os
 import torch
 import numpy as np
+import sdf_meshing
 from skimage import measure
 import trimesh
 
@@ -86,9 +87,16 @@ if __name__ == '__main__':
     results = torch.cat(results)
 
     grid = np.zeros((grid_size, grid_size, grid_size))
-    # coords = coords_hmm.view(3,-1).permute(1,0)
-    # coords = coords_full_grid
-    # coords = dataio.get_mgrid(grid_size,3) / 2
+
+
+    verts, faces, normals, values = np.zeros((0, 3)), np.zeros((0, 3)), np.zeros((0, 3)), np.zeros(0)
+    try:
+        verts, faces, normals, values = skimage.measure.marching_cubes_lewiner(
+            numpy_3d_sdf_tensor, level=0.0, spacing=[voxel_size] * 3
+        )
+    except:
+        print('Marching cubes failed!')
+
 
     coords = ((coords + 0.5) * (grid_size - 1)).numpy().round() ### !!! ten round bardzo wazny
     indices = np.clip(coords.astype(int), 0, grid_size - 1)
