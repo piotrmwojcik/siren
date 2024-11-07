@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
     grid_size = 64
 
-    coords = dataio.get_mgrid(grid_size,3) / 2
+    coords = dataio.get_mgrid(grid_size, 3) / 2
     # coords = torch.from_numpy(torch.load('/Users/kacpermarzol/PycharmProjects/siren2/siren/coords_dataset.pth'))
     # coords += 0.01
     # results.append(model({
@@ -80,6 +80,9 @@ if __name__ == '__main__':
     #
     for i in range(grid_size ** 3 // 16384):
         input = generate_input(coords, i)
+        print(input)
+        print(np.max(input))
+        print(np.min(input))
         output = model(input)['model_out'].detach().squeeze(0).round()
         results.append(output)
     #
