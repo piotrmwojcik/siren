@@ -80,9 +80,6 @@ if __name__ == '__main__':
     #
     for i in range(grid_size ** 3 // 16384):
         input = generate_input(coords, i)
-        print(input)
-        print(np.max(input['coords']))
-        print(np.min(input['coords']))
         output = model(input)['model_out'].detach().squeeze(0).round()
         results.append(output)
     #
