@@ -97,7 +97,7 @@ if __name__ == '__main__':
 
     verts, faces, normals, values = np.zeros((0, 3)), np.zeros((0, 3)), np.zeros((0, 3)), np.zeros(0)
     try:
-        verts, faces, normals, values = skimage.measure.marching_cubes_lewiner(
+        verts, faces, normals, values = measure.marching_cubes_lewiner(
             numpy_3d_sdf_tensor, level=0.0, spacing=[voxel_size] * 3
         )
     except Exception as e:
