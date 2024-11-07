@@ -1,7 +1,6 @@
 import sys, os
 import torch
 import numpy as np
-import sdf_meshing
 from skimage import measure
 import trimesh
 
