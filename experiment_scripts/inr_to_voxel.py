@@ -93,8 +93,8 @@ if __name__ == '__main__':
         verts, faces, normals, values = skimage.measure.marching_cubes_lewiner(
             numpy_3d_sdf_tensor, level=0.0, spacing=[voxel_size] * 3
         )
-    except:
-        print('Marching cubes failed!')
+    except Exception as e:
+        print('Marching cubes failed! ', e)
 
 
     coords = ((coords + 0.5) * (grid_size - 1)).numpy().round() ### !!! ten round bardzo wazny
