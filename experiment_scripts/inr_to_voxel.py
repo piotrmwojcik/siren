@@ -93,6 +93,8 @@ if __name__ == '__main__':
 
     grid = np.zeros((grid_size, grid_size, grid_size))
 
+    print('!!!')
+    print(grid.shape)
 
     verts, faces, normals, values = np.zeros((0, 3)), np.zeros((0, 3)), np.zeros((0, 3)), np.zeros(0)
     try:
