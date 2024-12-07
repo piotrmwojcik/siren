@@ -128,7 +128,6 @@ with tqdm(total=len(dataloader) * opt.num_epochs) as pbar:
         for step, (model_input_batch, gt_batch) in enumerate(dataloader):
             # print(step, model_input_batch.keys() ,gt_batch.keys()) # input: dict(idx, focal, c2w), gt: dict(img)
             if epoch % opt.epoch_for_full_rendering == 0 and step == 0:
-                print(model_input_batch)
                 model_input_eval, gt_eval = nerf_utils.get_samples_for_nerf(copy.deepcopy(model_input_batch),
                                                                  copy.deepcopy(gt_batch), opt, view_num=1,
                                                                  pixel_sampling=False)

@@ -124,7 +124,6 @@ def get_samples_for_nerf(model_input, gt, opt, view_sampling=True, pixel_samplin
     ALL_VIEW = gt['img'].shape[1]
     bsz = gt['img'].shape[0]
 
-    print(model_input['focal'])
     for i_batch in range(bsz):
         focal = model_input['focal'][i_batch]  # (ALL_VIEW)
         c2w = model_input['c2w'][i_batch]  # (ALL_VIEW,4,4)
