@@ -314,14 +314,20 @@ class SingleBVPNet(MetaModule):
                            hidden_features=hidden_features, outermost_linear=True, nonlinearity=type)
         # print(self)
 
-    def forward(self, model_input, params=None):
+    def forward(self, model_input, chunk_size=1024*8, params=None):
         if self.mode == 'nerf':
             if params is None:
                 params = OrderedDict(self.named_parameters())
 
-            coords = model_input['coords'].clone().detach().requires_grad_(False)
+            coords = model_input['coords'].clone().detach().requires_grad_(True)
+            outputs = []
+            for i in range(0, coords.shape[1], chunk_size):
+                chunk_coords = coords[i:i + chunk_size]
+                chunk_output = self.net(chunk_coords, get_subdict(params, 'net'))
+                outputs.append(chunk_output)
 
-            output = self.net(coords, get_subdict(params, 'net'))
+            output = torch.cat(outputs, dim=0)
+            # output=self.net(coords, self.get_subdict(params, 'net'))
 
             return {'model_in': model_input, 'model_out': output}
         else:

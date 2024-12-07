@@ -3,23 +3,33 @@ import numpy as np
 import math
 import torch.nn.functional as F
 import torchvision
+from PIL import Image
 
 
-def save_rendering_spiral_gif(model_output, opt, image_path, max_num=-1):
-    print(model_output)
-    pred_rgb = model_output['model_out']['rgb'].reshape(-1, opt.H, opt.W, 3).permute(0,3,1,2).detach().cpu()
-    pred_depth = model_output['model_out']['depth'].reshape(-1, opt.H, opt.W, 1).permute(0,3,1,2).detach().cpu()
-    pred_acc = model_output['model_out']['acc'].reshape(-1, opt.H, opt.W, 1).permute(0,3,1,2).detach().cpu()
-    pred_depth = ((pred_depth-pred_depth.min())/(pred_depth.max()-pred_depth.min())*2-1).repeat(1,3,1,1)
-    pred_acc = pred_acc.repeat(1,3,1,1)
-    combined_image = torch.cat((pred_rgb, pred_depth, pred_acc), -1)
+def tensor_to_pil(img_tensor):
+    img_np = (img_tensor.permute(1, 2, 0).detach().cpu().numpy() * 255).astype('uint8')
+    return Image.fromarray(img_np)
+def create_gif(image_list, output_path, duration=150, loop=0):
+    frames = [tensor_to_pil(img_tensor) for img_tensor in image_list]
+    frames[0].save(
+        output_path,
+        save_all=True,
+        append_images=frames[1:],
+        duration=duration,
+        loop=loop
+    )
 
-    if max_num > 0:
-        save_num = min(combined_image.size(0), max_num)
-        combined_image = combined_image[:save_num]
 
-    combined_image = torchvision.utils.make_grid(combined_image, nrow=1)
-    torchvision.utils.save_image(combined_image, image_path)
+def save_rendering_spiral(model_output, opt):
+    img = model_output['model_out'].reshape(-1, opt.H, opt.W, 3).permute(0,3,1,2).detach().cpu()
+    # pred_depth = model_output['model_out']['depth'].reshape(-1, opt.H, opt.W, 1).permute(0,3,1,2).detach().cpu()
+    # pred_acc = model_output['model_out']['acc'].reshape(-1, opt.H, opt.W, 1).permute(0,3,1,2).detach().cpu()
+    # pred_depth = ((pred_depth-pred_depth.min())/(pred_depth.max()-pred_depth.min())*2-1).repeat(1,3,1,1)
+    # pred_acc = pred_acc.repeat(1,3,1,1)
+    # combined_image = torch.cat((pred_rgb, pred_depth, pred_acc), -1)
+
+    # combined_image = torchvision.utils.make_grid(combined_image, nrow=1)
+    return img
 
 def save_rendering_output(model_output, gt, opt, image_path, max_num=-1):
     save_gt = gt['img'].reshape(-1, opt.H, opt.W, 3).permute(0,3,1,2).detach().cpu()
