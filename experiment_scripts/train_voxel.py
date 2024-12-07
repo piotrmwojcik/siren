@@ -76,6 +76,13 @@ B = torch.randn((num_input_channels, mapping_dim)) * scale
 # save_path = 'data/minidataset/B.pth'
 # torch.save(B, save_path)
 # B = torch.load(save_path)
+
+grid = dataio.get_grid(4, 4, b=0)
+
+print(grid.shape)
+print(grid[0])
+print(grid[1])
+
 shapenet = dataio.ShapeNet(dataset_root=opt.shapenet_path)
 
 summaries_dir = os.path.join(opt.logging_root, opt.experiment_name, 'summary')
@@ -103,8 +110,9 @@ for sample_idx, sample in enumerate(shapenet):
 
     coords = in_dict['coords'].permute(1, 0).view(3, 128, 128)
     x = VoxelObject(in_dict['idx'], coords, img)
+
     print(f"Processing object: {sample_idx}")
-    image_resolution = (64, 64, 64)
+    image_resolution = (1, 128, 128)
     dataloader_ours = DataLoader(x, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)
 
     model_ours = modules.ImplicitMLP3D(B=B)
@@ -121,7 +129,7 @@ for sample_idx, sample in enumerate(shapenet):
 
     dataloader_siren = DataLoader(x, shuffle=True, batch_size=opt.batch_size,
                                   pin_memory=True, num_workers=0)
-    image_resolution = (64, 64, 64)
+    image_resolution = (1, 128, 128)
 
     model_siren = modules.SingleBVPNet(sidelength=image_resolution, out_features=1, in_features=3)
     model_siren.to(device)
@@ -133,21 +141,20 @@ for sample_idx, sample in enumerate(shapenet):
     loss_fn = partial(loss_functions.image_mse, None)
     summary_fn = partial(utils.write_image_summary, image_resolution)
 
-    # to działa:
-    # psnr_siren = training.train(model=model_siren, train_dataloader=dataloader_siren, epochs=opt.num_epochs_siren,
-    #                             lr=opt.lr_siren,
-    #                             steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
-    #                             model_dir=root_path_siren, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
-    #                             writer=writer_siren)
+    psnr_siren = training.train(model=model_siren, train_dataloader=dataloader_siren, epochs=opt.num_epochs_siren,
+                                lr=opt.lr_siren,
+                                steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
+                                model_dir=root_path_siren, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
+                                writer=writer_siren)
     psnr_ours = training.train(model=model_ours, train_dataloader=dataloader_ours, epochs=opt.num_epochs_ours,
                                lr=opt.lr_ours,
                                steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
                                model_dir=root_path_ours, loss_fn=loss_fn, summary_fn=summary_fn, device=device,
                                writer=writer_ours)
-    # if results_siren is not None:
-    #     results_siren = np.vstack((results_siren, np.array(psnr_siren)))
-    # else:
-    #     results_siren = np.array(psnr_siren)
+    if results_siren is not None:
+        results_siren = np.vstack((results_siren, np.array(psnr_siren)))
+    else:
+        results_siren = np.array(psnr_siren)
 
     if results_ours is not None:
         results_ours = np.vstack((results_ours, np.array(psnr_ours)))
@@ -156,19 +163,22 @@ for sample_idx, sample in enumerate(shapenet):
     if sample_idx == 1:
         break
 
-# mean_psnr_siren = np.mean(results_siren, 0)
+
+    counter += 1
+    if counter == 40: break
+
+mean_psnr_siren = np.mean(results_siren, 0)
 mean_psnr_ours = np.mean(results_ours, 0)
 # std_psnr_siren = np.std(results_siren, 0)
 std_psnr_ours = np.std(results_ours, 0)
 
-# for psnr, step in zip(mean_psnr_siren, steps_siren):
-#     print(step, psnr)
-#     writer_siren.add_scalar('psnr', psnr, step)
-#
-# for psnr, step in zip(mean_psnr_ours, steps_ours):
-#     print(step, psnr)
-#     writer_ours.add_scalar('psnr', psnr, step)
+for psnr, step in zip(mean_psnr_siren, steps_siren):
+    print(step, psnr)
+    writer_siren.add_scalar('psnr', psnr, step)
 
+for psnr, step in zip(mean_psnr_ours, steps_ours):
+    print(step, psnr)
+    writer_ours.add_scalar('psnr', psnr, step)
 
 import matplotlib.pyplot as plt
 

@@ -613,8 +613,8 @@ def calculate_psnr(image_resolution, model_output, gt):
     # pred_img = dataio.lin2img(model_output['model_out'], image_resolution)
     # gt_img = dataio.lin2img(gt['img'], image_resolution)
 
-    pred_img = model_output['model_out']
-    gt_img = gt['img']
+    pred_img = model_output['model_out'].view(1, 128, 128)
+    gt_img = gt['img'].view(1, 128, 128)
 
     batch_size = pred_img.shape[0]
 
