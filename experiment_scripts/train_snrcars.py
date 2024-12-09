@@ -10,6 +10,7 @@ import copy
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import Dataset
 from tqdm.autonotebook import tqdm
+from functools import partial
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -18,13 +19,7 @@ import dataio, meta_modules, utils, training, loss_functions, modules, nerf_util
 from torch.utils.data import DataLoader
 import configargparse
 
-exp_name = "test1"
-base_dir = os.path.join(os.path.dirname(os.getcwd()), "nerf_experiments", exp_name)
-rendering_dir = os.path.join(base_dir, "renders")
-checkpoints_dir = os.path.join(base_dir, "checkpoints")
 
-os.makedirs(rendering_dir, exist_ok=True)
-os.makedirs(checkpoints_dir, exist_ok=True)
 
 # class NerfObject(Dataset):
 #     def __init__(self, idx, focal, c2w, img):
@@ -57,7 +52,7 @@ p.add_argument('--lr', type=float, default=1e-4, help='learning rate. default=5e
 p.add_argument('--num_epochs', type=int, default=10000,
                help='Number of epochs to train for.')
 
-p.add_argument('--epochs_til_ckpt', type=int, default=500,
+p.add_argument('--epochs_til_ckpt', type=int, default=1000,
                help='Time interval in seconds until checkpoint is saved.')
 p.add_argument('--steps_til_summary', type=int, default=100,
                help='Time interval in seconds until tensorboard summary is saved.')
@@ -71,7 +66,7 @@ p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained mo
 
 # nerf
 # NeRF strategy
-p.add_argument('--epoch_for_full_rendering', type=int, default=100)
+p.add_argument('--epoch_for_full_rendering', type=int, default=500)
 p.add_argument('--subsampled_views', type=int, default=32,
                help='Number of sampling views per scene when training')
 p.add_argument('--subsampled_pixels', type=int, default=512,
@@ -91,35 +86,31 @@ p.add_argument('--rendering_type', type=str, default='baseline')
 
 opt = p.parse_args()
 
-sdf_dataset = dataio.SRNDatasetsLMDB("cars", dataset_root="/Users/kacpermarzol/Downloads/datasets")
+base_dir = os.path.join(os.path.dirname(os.getcwd()), "nerf_experiments", opt.experiment_name)
+print(base_dir)
+rendering_dir = os.path.join(base_dir, "renders")
+checkpoints_dir = os.path.join(base_dir, "checkpoints")
+
+os.makedirs(rendering_dir, exist_ok=True)
+os.makedirs(checkpoints_dir, exist_ok=True)
+
+sdf_dataset = dataio.SRNDatasetsLMDB("cars", dataset_root="/net/tscratch/people/plgmarzol/Datasets")
 dataloader = DataLoader(sdf_dataset, shuffle=False, batch_size=1, pin_memory=True, num_workers=0)
-
-
-# for sample_idx, sample in enumerate(sdf_dataset):
-#     in_dict, gt_dict = sample
-#
-#     print(in_dict["c2w"].shape)
-#     print(gt_dict["img"].shape)
-#     break
 
 # Define the model.
 model = modules.SingleBVPNet(out_features=4, in_features=3, mode='nerf')
 model.to(device)
 optim = torch.optim.Adam(lr=opt.lr, params=model.parameters())
 
-
 opt.randomized = opt.use_noise
 opt.lindisp = sdf_dataset.lindisp
 opt.white_bkgd = True
-opt.H, opt.W = 128,128
+opt.H, opt.W = 128, 128
 in_channels, out_channels = 3, 4
 
-loss_fn = loss_functions.image_mse
-summary_fn = utils.write_sdf_summary
-root_path = os.path.join(opt.logging_root, opt.experiment_name)
-
-
+loss_fn = partial(loss_functions.image_mse, None)
 total_steps = 0
+
 with tqdm(total=len(dataloader) * opt.num_epochs) as pbar:
     for epoch in range(opt.num_epochs):
         print(f'Epoch {epoch}/{opt.num_epochs}')
@@ -138,9 +129,10 @@ with tqdm(total=len(dataloader) * opt.num_epochs) as pbar:
             # print(gt['img'].shape) #torch.Size([1, 16384, 3])
             model_input = {key: value.to(device) for key, value in model_input.items()}
             gt = {key: value.to(device) for key, value in gt.items()}
-            batch_size = gt['img'].size(0)
-            model_output = model(model_input)
 
+            batch_size = gt['img'].size(0)
+
+            model_output = model(model_input)
             model_output = nerf_utils.nerf_volume_rendering(model_output, opt)
             losses = loss_fn(model_output, gt)
 
@@ -157,7 +149,6 @@ with tqdm(total=len(dataloader) * opt.num_epochs) as pbar:
                 loss.backward()
             optim.step()
 
-
             if epoch % opt.epoch_for_full_rendering == 0 and step == 0:
                 model_input_eval = {key: value.to(device) for key, value in model_input_eval.items()}
                 gt_eval = {key: value.to(device) for key, value in gt_eval.items()}
@@ -166,7 +157,6 @@ with tqdm(total=len(dataloader) * opt.num_epochs) as pbar:
                 model_output_full = nerf_utils.nerf_volume_rendering(model_output_full, opt, 'all')
                 nerf_utils.save_rendering_output(model_output_full, gt_eval, opt,
                                       os.path.join(rendering_dir, f'E{epoch}_S{step}.png'))
-
             pbar.update(1)
             break
 

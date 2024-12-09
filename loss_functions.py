@@ -5,7 +5,7 @@ import diff_operators
 import modules
 
 
-def image_mse(model_output, gt,mask=None):
+def image_mse(mask, model_output, gt):
     if mask is None:
         return {'img_loss': ((model_output['model_out'] - gt['img']) ** 2).mean()}
     else:
