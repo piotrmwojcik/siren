@@ -67,7 +67,7 @@ for png_file in jpg_files:
     image_resolution = (64, 64)
 
     print('!!!')
-    print(coord_dataset[0][1].shape)
+    print(coord_dataset[0])
 
     dataloader = DataLoader(coord_dataset, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)
 
