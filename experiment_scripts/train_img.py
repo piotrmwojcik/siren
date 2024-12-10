@@ -127,6 +127,9 @@ for png_file in jpg_files[:20]:
     coord_dataset_siren = dataio.Implicit2DWrapper(img_dataset_siren, sidelength=64, compute_diff='none', grid='siren')
     image_resolution = (64, 64)
 
+    print('!!!')
+    print(coord_dataset_siren[0].shape)
+
     dataloader_siren = DataLoader(coord_dataset_siren, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)
 
     model_siren = modules.SingleBVPNet(sidelength=image_resolution, out_features = 3)
