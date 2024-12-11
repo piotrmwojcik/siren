@@ -73,6 +73,9 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                         return train_loss
                     optim.step(closure)
                 model_output = model(model_input)
+                print('!!!')
+                print(model_output['model_out'].shape)
+                print(gt['img'].shape)
                 losses = loss_fn(model_output, gt)
 
                 train_loss = 0.
