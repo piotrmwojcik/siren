@@ -73,7 +73,7 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                         return train_loss
                     optim.step(closure)
                 model_output = model(model_input)
-                gt['img'] = gt['img'].repeat(8, 1, 1)
+                gt['img'] = gt['img'].repeat(32, 1, 1)
                 #print('!!!')
                 #print(model_output['model_out'].shape)
                 #print(gt['img'].shape)
