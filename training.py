@@ -57,7 +57,7 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                 model_input = {key: value.cuda() for key, value in model_input.items()}
                 for k in model_input:
                     print('!!!')
-                    print(model_input[k].shape)
+                    print(k, model_input[k].shape)
                 gt = {key: value.cuda() for key, value in gt.items()}
 
                 if double_precision:
