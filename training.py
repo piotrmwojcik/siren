@@ -87,8 +87,6 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                     train_loss += single_loss
 
                 train_losses.append(train_loss.item())
-                print('loss !!')
-                print(train_losses)
                 #writer.add_scalar("total_train_loss", train_loss, total_steps)
 
                 #if not total_steps % steps_til_summary:

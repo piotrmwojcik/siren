@@ -85,6 +85,9 @@ for png_file in jpg_files:
             layer_names.append(l)
         print(layers)
 
+        models = [modules.ImplicitMLP(B=B) for _ in range(32)]
+        model = modules.ParallelImplicitMLP(models)
+
         #model = modules.SingleBVPNet(type=opt.model_type, mode='mlp', hidden_features=128, out_features=3, sidelength=image_resolution)
     elif opt.model_type == 'rbf' or opt.model_type == 'nerf':
         model = modules.SingleBVPNet(type='relu', mode=opt.model_type, hidden_features=128, out_features=3, sidelength=image_resolution)
