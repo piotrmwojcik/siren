@@ -66,8 +66,6 @@ for png_file in jpg_files:
     coord_dataset = dataio.Implicit2DWrapper(img_dataset, sidelength=64, compute_diff='none')
     image_resolution = (64, 64)
 
-    print('!!!')
-    print(coord_dataset[0][0]['coords'].shape)
 
     dataloader = DataLoader(coord_dataset, shuffle=True, batch_size=opt.batch_size, pin_memory=True, num_workers=0)
 

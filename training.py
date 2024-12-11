@@ -55,10 +55,6 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                 start_time = time.time()
             
                 model_input = {key: value.cuda() for key, value in model_input.items()}
-                print('!!!!')
-                for key in model_input:
-                    print(model_input[key].shape)
-                print('input shape')
                 gt = {key: value.cuda() for key, value in gt.items()}
 
                 if double_precision:
@@ -91,6 +87,8 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                     train_loss += single_loss
 
                 train_losses.append(train_loss.item())
+                print('loss !!')
+                print(train_losses)
                 #writer.add_scalar("total_train_loss", train_loss, total_steps)
 
                 #if not total_steps % steps_til_summary:
