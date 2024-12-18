@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 from torchmeta.modules.module import MetaModule
-from torchmeta.modules.utils import get_subdict
+#from torchmeta.modules.utils import get_subdict
 
 class MetaSequential(nn.Sequential, MetaModule):
     __doc__ = nn.Sequential.__doc__
