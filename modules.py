@@ -21,7 +21,7 @@ class GaussianFourierFeatureTransform(nn.Module):
      returns a tensor of size [batches, mapping_dim*2, width, height].
     """
 
-    def __init__(self, B, num_input_channels=2, mapping_dim=256):
+    def __init__(self, B, num_input_channels=2, mapping_dim=128):
         super().__init__()
 
         self._num_input_channels = num_input_channels
