@@ -21,12 +21,12 @@ class GaussianFourierFeatureTransform(nn.Module):
      returns a tensor of size [batches, mapping_dim*2, width, height].
     """
 
-    def __init__(self, B, num_input_channels=2, mapping_dim=256):
+    def __init__(self, B, num_input_channels=2, mapping_dim=32):
         super().__init__()
 
         self._num_input_channels = num_input_channels
         self.mapping_dim = mapping_dim
-        self._B = B  # torch.randn((num_input_channels, mapping_dim)) * scale
+        self._B = B
 
     def forward(self, x, phase=None):
         batches, channels, width, height = x.shape
@@ -36,9 +36,11 @@ class GaussianFourierFeatureTransform(nn.Module):
 
         # Make shape compatible for matmul with _B.
         # From [B, C, W, H] to [(B*W*H), C].
-        x = x.permute(0, 2, 3, 1).reshape(batches * width * height, channels)
+        x = x.permute(0, 2, 3, 1).reshape(batches * width * height, channels).to(x.device)
 
-        x = x @ self._B.to(x.device)
+        #print('!!! ', self._B.shape, self._B[:, :self.mapping_dim].shape)
+
+        x = x @ self._B[:, :self.mapping_dim].to(x.device)
 
         # From [(B*W*H), C] to [B, W, H, C]
         x = x.view(batches, width, height, self.mapping_dim)
@@ -51,7 +53,6 @@ class GaussianFourierFeatureTransform(nn.Module):
             x = 2 * pi * x
 
         return torch.cat([torch.sin(x), torch.cos(x)], dim=1)
-
 
 class BatchLinear(nn.Linear, MetaModule):
     '''A linear meta-layer that can deal with batched weight matrices and biases, as for instance output by a
