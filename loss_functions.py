@@ -6,7 +6,8 @@ import modules
 
 
 def image_mse(mask, model_output, gt):
-
+    # print(gt['img'].shape)
+    # print(model_output['model_out'].shape)
     if mask is None:
         return {'img_loss': ((model_output['model_out'] - gt['img']) ** 2).mean()}
     else:
