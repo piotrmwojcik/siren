@@ -56,10 +56,10 @@ jpg_files = glob.glob(os.path.join(opt.image_path, "*.png"))
 num_input_channels = 2
 mapping_dim = 128
 scale = 10
-B = torch.randn((num_input_channels, mapping_dim)) * scale
+#B = torch.randn((num_input_channels, mapping_dim)) * scale
 # save_path = 'data/minidataset/B.pth'
 # torch.save(B, save_path)
-# B = torch.load(save_path)
+B = torch.load('/data/pwojcik/siren/random_mod/B.pth')
 
 summaries_dir = os.path.join(opt.logging_root, opt.experiment_name, 'summary')
 summaries_dir_siren = os.path.join(opt.logging_root, opt.experiment_name, 'summary', 'siren')
@@ -68,8 +68,8 @@ summaries_dir_ours = os.path.join(opt.logging_root, opt.experiment_name, 'summar
 writer_siren = SummaryWriter(summaries_dir_siren)
 writer_ours = SummaryWriter(summaries_dir_ours)
 
-steps_siren = np.array([500 * i for i in range(opt.num_epochs_siren // 200 + 1)])
-steps_ours = np.array([500 * i for i in range(opt.num_epochs_ours // 200 + 1)])
+steps_siren = np.array([200 * i for i in range(opt.num_epochs_siren // 200 + 1)])
+steps_ours = np.array([200 * i for i in range(opt.num_epochs_ours // 200 + 1)])
 
 sum_psnr_siren = [0 for i in range(opt.num_epochs_siren // 2200 + 1)]
 sum_psnr_ours = [0 for i in range(opt.num_epochs_ours // 200 + 1)]
