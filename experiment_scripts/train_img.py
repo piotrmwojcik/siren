@@ -33,14 +33,14 @@ p.add_argument('--lr_siren', type=float, default=1e-4, help='learning rate. defa
 p.add_argument('--lr_ours', type=float, default=5e-4)
 p.add_argument('--num_epochs_siren', type=int, default=10001,
                help='Number of epochs to train for.')
-p.add_argument('--num_epochs_ours', type=int, default=15001)
+p.add_argument('--num_epochs_ours', type=int, default=10001)
 
 p.add_argument('--image_path', default="/data/pwojcik/cifar10_filtered/", type=str,
                help='Path to the gt image.')
 
 p.add_argument('--epochs_til_ckpt', type=int, default=500,
                help='Time interval in seconds until checkpoint is saved.')
-p.add_argument('--steps_til_summary', type=int, default=500,
+p.add_argument('--steps_til_summary', type=int, default=200,
                help='Time interval in seconds until tensorboard summary is saved.')
 
 p.add_argument('--model_type', type=str, default='sine',
