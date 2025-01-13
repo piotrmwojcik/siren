@@ -78,7 +78,7 @@ results_siren = None
 results_ours = None
 
 counter = 0
-for png_file in jpg_files[:50]:
+for png_file in jpg_files[:10]:
     counter += 1
     full_path = os.path.abspath(png_file)
     file_name = os.path.basename(png_file)
