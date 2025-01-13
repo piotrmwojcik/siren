@@ -35,7 +35,7 @@ p.add_argument('--num_epochs_siren', type=int, default=10001,
                help='Number of epochs to train for.')
 p.add_argument('--num_epochs_ours', type=int, default=15001)
 
-p.add_argument('--image_path', default="../data/minidataset/", type=str,
+p.add_argument('--image_path', default="/data/pwojcik/cifar10_filtered/", type=str,
                help='Path to the gt image.')
 
 p.add_argument('--epochs_til_ckpt', type=int, default=500,
@@ -52,7 +52,7 @@ p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained mo
 
 opt = p.parse_args()
 
-jpg_files = glob.glob(os.path.join(opt.image_path, "*.jpg"))
+jpg_files = glob.glob(os.path.join(opt.image_path, "*.png"))
 num_input_channels = 2
 mapping_dim = 128
 scale = 10
