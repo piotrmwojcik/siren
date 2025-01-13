@@ -68,11 +68,11 @@ summaries_dir_ours = os.path.join(opt.logging_root, opt.experiment_name, 'summar
 writer_siren = SummaryWriter(summaries_dir_siren)
 writer_ours = SummaryWriter(summaries_dir_ours)
 
-steps_siren = np.array([500 * i for i in range(opt.num_epochs_siren // 500 + 1)])
-steps_ours = np.array([500 * i for i in range(opt.num_epochs_ours // 500 + 1)])
+steps_siren = np.array([500 * i for i in range(opt.num_epochs_siren // 200 + 1)])
+steps_ours = np.array([500 * i for i in range(opt.num_epochs_ours // 200 + 1)])
 
-sum_psnr_siren = [0 for i in range(opt.num_epochs_siren // 500 + 1)]
-sum_psnr_ours = [0 for i in range(opt.num_epochs_ours // 500 + 1)]
+sum_psnr_siren = [0 for i in range(opt.num_epochs_siren // 2200 + 1)]
+sum_psnr_ours = [0 for i in range(opt.num_epochs_ours // 200 + 1)]
 
 results_siren = None
 results_ours = None
